@@ -1,5 +1,7 @@
 package com.socialmedia.connecto.integrationtests;
 
+import com.jayway.jsonpath.JsonPath;
+import com.socialmedia.connecto.auth.JwtUtil;
 import com.socialmedia.connecto.models.Gender;
 import com.socialmedia.connecto.models.Role;
 import com.socialmedia.connecto.models.User;
@@ -21,8 +23,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest // loads the full application context
 @AutoConfigureMockMvc // enables MockMvc auto-configuration
@@ -37,6 +38,9 @@ public class AuthenticationControllerTest {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private JwtUtil jwtUtil;
 
     @BeforeEach
     void cleanDB() {
@@ -209,6 +213,123 @@ public class AuthenticationControllerTest {
                 .andExpect(content().string("Name is required"));
 
         assertEquals(0, userRepository.count());
+    }
+
+    @Test
+    void login_ShouldReturnResponseDTO_WhenValidInput() throws Exception {
+        User user = new User();
+        user.setEmail("test@example.com");
+        user.setPassword(passwordEncoder.encode("12345678"));
+        user.setRole(Role.USER);
+        user.setName("Test User");
+        user.setBanned(false);
+        user.setPictureURL("url");
+        user.setGender(Gender.MALE);
+        user.setPrivate(false);
+
+        userRepository.save(user);
+
+        String requestBody = """
+            {
+                "email": "test@example.com",
+                "password": "12345678"
+            }
+        """;
+
+        String responseJson = mockMvc.perform(post("/api/auth/login")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(requestBody))
+                        .andExpect(status().isOk())
+                        .andExpect(jsonPath("$.token").exists())
+                        .andExpect(jsonPath("$.name").value("Test User"))
+                        .andExpect(jsonPath("$.role").value("USER"))
+                        .andExpect(jsonPath("$.userId").exists())
+                        .andExpect(jsonPath("$.pictureURL").value("url"))
+                        .andReturn()
+                        .getResponse()
+                        .getContentAsString();
+
+        String token = JsonPath.read(responseJson, "$.token");
+
+        assertEquals(user.getEmail(), jwtUtil.extractUsername(token));
+        assertEquals(user.getRole().name(), jwtUtil.extractRole(token));
+
+    }
+
+    @Test
+    void login_ShouldFail_WhenEmailNotFound() throws Exception {
+
+        String requestBody = """
+            {
+                "email": "test@example.com",
+                "password": "ahlyplayer"
+            }
+        """;
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isUnauthorized())
+                .andExpect(content().string("Invalid email or password"));
+
+    }
+
+    @Test
+    void login_ShouldFail_WhenInvalidPassword() throws Exception {
+        User user = new User();
+        user.setEmail("test@example.com");
+        user.setPassword(passwordEncoder.encode("12345678"));
+        user.setRole(Role.USER);
+        user.setName("Test User");
+        user.setBanned(false);
+        user.setPictureURL("url");
+        user.setGender(Gender.MALE);
+        user.setPrivate(false);
+
+        userRepository.save(user);
+
+        String requestBody = """
+            {
+                "email": "test@example.com",
+                "password": "ahlyplayer"
+            }
+        """;
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isUnauthorized())
+                .andExpect(content().string("Invalid email or password"));
+
+    }
+
+    @Test
+    void login_ShouldFail_WhenUserIsBanned() throws Exception {
+        User user = new User();
+        user.setEmail("test@example.com");
+        user.setPassword(passwordEncoder.encode("12345678"));
+        user.setRole(Role.USER);
+        user.setName("Test User");
+        user.setBanned(true);
+        user.setPictureURL("url");
+        user.setGender(Gender.MALE);
+        user.setPrivate(false);
+
+        userRepository.save(user);
+
+        String requestBody = """
+            {
+                "email": "test@example.com",
+                "password": "12345678"
+            }
+        """;
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isUnauthorized())
+                .andExpect(content().string("User is currently banned from the platform"));
+
     }
 
 }

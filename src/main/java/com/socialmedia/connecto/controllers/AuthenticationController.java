@@ -1,5 +1,7 @@
 package com.socialmedia.connecto.controllers;
 
+import com.socialmedia.connecto.dtos.LoginRequestDTO;
+import com.socialmedia.connecto.dtos.LoginResponseDTO;
 import com.socialmedia.connecto.dtos.UserRegistrationDTO;
 import com.socialmedia.connecto.services.AuthenticationServiceImpl;
 import jakarta.validation.Valid;
@@ -29,5 +31,16 @@ public class AuthenticationController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
+
+    @PostMapping("/login")
+    public ResponseEntity login(@Valid @RequestBody LoginRequestDTO dto) {
+        try {
+            LoginResponseDTO response = authenticationServiceImpl.login(dto);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+        }
+    }
+
 
 }
