@@ -406,4 +406,51 @@ public class AuthenticationControllerTests {
                 .andExpect(status().isForbidden());
     }
 
+    @Test
+    void forgotPassword_ShouldChangePassword_WhenEmailValid() throws Exception {
+        User user = new User();
+        user.setEmail("abdalla.mahgoub@student.guc.edu.eg");
+        user.setPassword(passwordEncoder.encode("12345678"));
+        user.setRole(Role.USER);
+        user.setName("Test User");
+        user.setBanned(false);
+        user.setPictureURL("url");
+        user.setGender(Gender.MALE);
+        user.setPrivate(false);
+
+        userRepository.save(user);
+
+        mockMvc.perform(post("/api/auth/forgot-password")
+                        .param("email", user.getEmail()))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Temporary password sent to your email, if email is valid."));
+
+        Optional<User> updatedUser = userRepository.findByEmail(user.getEmail());
+
+        assertTrue(updatedUser.isPresent());
+        assertNotEquals(user.getPassword(), updatedUser.get().getPassword());
+    }
+
+    @Test
+    void forgotPassword_ShouldReturn200Ok_WhenEmailDoesntExist() throws Exception {
+        User user = new User();
+        user.setEmail("abdalla.mahgoub@student.guc.edu.eg");
+        user.setPassword(passwordEncoder.encode("12345678"));
+        user.setRole(Role.USER);
+        user.setName("Test User");
+        user.setBanned(false);
+        user.setPictureURL("url");
+        user.setGender(Gender.MALE);
+        user.setPrivate(false);
+
+        userRepository.save(user);
+
+        mockMvc.perform(post("/api/auth/forgot-password")
+                        .param("email", "example@gouba.com"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Temporary password sent to your email, if email is valid."));
+
+        assertEquals(1, userRepository.count());
+    }
+
 }

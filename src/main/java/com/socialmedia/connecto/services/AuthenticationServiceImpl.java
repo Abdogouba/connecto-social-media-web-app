@@ -14,6 +14,9 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+import java.util.UUID;
+
 @Service
 public class AuthenticationServiceImpl implements AuthenticationService {
 
@@ -21,12 +24,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
+    private final EmailService emailService;
 
-    public AuthenticationServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, AuthenticationManager authenticationManager, JwtUtil jwtUtil) {
+    public AuthenticationServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, AuthenticationManager authenticationManager, JwtUtil jwtUtil, EmailService emailService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
         this.jwtUtil = jwtUtil;
+        this.emailService = emailService;
     }
 
     public void register(UserRegistrationDTO dto) {
@@ -82,6 +87,23 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 user.getId(),
                 user.getPictureURL()
         );
+    }
+
+    @Override
+    public void forgotPassword(String email) {
+        Optional<User> user = userRepository.findByEmail(email);
+
+        if (user.isPresent()) {
+            String tempPassword = UUID.randomUUID().toString().substring(0, 8);
+            try {
+                this.emailService.sendPassword(user.get().getEmail(), tempPassword);
+                user.get().setPassword(passwordEncoder.encode(tempPassword));
+                userRepository.save(user.get());
+            } catch (Exception e) {
+                System.out.println("Failed to send email: " + e.getMessage());
+            }
+        }
+
     }
 
 }

@@ -10,4 +10,6 @@ public interface AuthenticationService {
 
     LoginResponseDTO login(LoginRequestDTO dto);
 
+    void forgotPassword(String email);
+
 }
