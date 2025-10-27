@@ -15,20 +15,19 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 
 import java.time.LocalDate;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest // loads the full application context
 @AutoConfigureMockMvc // enables MockMvc auto-configuration
 @ActiveProfiles("test") // use application-test.properties
-public class AuthenticationControllerTest {
+public class AuthenticationControllerTests {
 
     @Autowired
     private MockMvc mockMvc; // allows us to send fake HTTP requests
@@ -330,6 +329,81 @@ public class AuthenticationControllerTest {
                 .andExpect(status().isUnauthorized())
                 .andExpect(content().string("User is currently banned from the platform"));
 
+    }
+
+    @Test
+    void userRoute_ShouldFail_WithoutAuth() throws Exception {
+        mockMvc.perform(get("/api/users/test"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void userRoute_ShouldWork_WithUserToken() throws Exception {
+        mockMvc.perform(get("/api/users/test")
+                        .header("Authorization", "Bearer " + generateToken(Role.USER)))
+                .andExpect(status().isOk())
+                .andExpect(content().string("User area"));
+    }
+
+    private String generateToken(Role role) {
+        User user = new User();
+        user.setEmail("test@example.com");
+        user.setPassword(passwordEncoder.encode("12345678"));
+        user.setRole(role);
+        user.setName("Test User");
+        user.setBanned(false);
+        user.setPictureURL("url");
+        user.setGender(Gender.MALE);
+        user.setPrivate(false);
+
+        userRepository.save(user);
+
+        return jwtUtil.generateToken(user.getEmail(), user.getRole().name());
+    }
+
+    @Test
+    void adminRoute_ShouldFail_WhenUserRole() throws Exception {
+        mockMvc.perform(get("/api/admins/test")
+                        .header("Authorization", "Bearer " + generateToken(Role.USER)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void adminRoute_ShouldWork_WhenAdmin() throws Exception {
+        mockMvc.perform(get("/api/admins/test")
+                        .header("Authorization", "Bearer " + generateToken(Role.ADMIN)))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Admin area"));
+    }
+
+    @Test
+    void adminRoute_ShouldWork_WhenSuperAdmin() throws Exception {
+        mockMvc.perform(get("/api/admins/test")
+                        .header("Authorization", "Bearer " + generateToken(Role.SUPER_ADMIN)))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Admin area"));
+    }
+
+    @Test
+    void superRoute_ShouldWork_WhenSuperAdmin() throws Exception {
+        mockMvc.perform(get("/api/supers/test")
+                        .header("Authorization", "Bearer " + generateToken(Role.SUPER_ADMIN)))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Super area"));
+    }
+
+    @Test
+    void superRoute_ShouldFail_WhenUserRole() throws Exception {
+        mockMvc.perform(get("/api/supers/test")
+                        .header("Authorization", "Bearer " + generateToken(Role.USER)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void superRoute_ShouldFail_WhenAdminRole() throws Exception {
+        mockMvc.perform(get("/api/supers/test")
+                        .header("Authorization", "Bearer " + generateToken(Role.ADMIN)))
+                .andExpect(status().isForbidden());
     }
 
 }
