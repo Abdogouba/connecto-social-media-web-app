@@ -228,6 +228,8 @@ public class AuthenticationControllerTests {
 
         userRepository.save(user);
 
+        User savedUser = userRepository.findByEmail(user.getEmail()).get();
+
         String requestBody = """
             {
                 "email": "test@example.com",
@@ -240,10 +242,17 @@ public class AuthenticationControllerTests {
                                 .content(requestBody))
                         .andExpect(status().isOk())
                         .andExpect(jsonPath("$.token").exists())
-                        .andExpect(jsonPath("$.name").value("Test User"))
-                        .andExpect(jsonPath("$.role").value("USER"))
-                        .andExpect(jsonPath("$.userId").exists())
-                        .andExpect(jsonPath("$.pictureURL").value("url"))
+                        .andExpect(jsonPath("$.id").value(savedUser.getId()))
+                        .andExpect(jsonPath("$.name").value(user.getName()))
+                        .andExpect(jsonPath("$.email").value(user.getEmail()))
+                        .andExpect(jsonPath("$.gender").value(user.getGender().name()))
+                        .andExpect(jsonPath("$.birthDate").value(user.getBirthDate()))
+                        .andExpect(jsonPath("$.location").value(user.getLocation()))
+                        .andExpect(jsonPath("$.bio").value(user.getBio()))
+                        .andExpect(jsonPath("$.private").value(user.isPrivate()))
+                        .andExpect(jsonPath("$.role").value(user.getRole().name()))
+                        .andExpect(jsonPath("$.pictureURL").value(user.getPictureURL()))
+                        .andExpect(jsonPath("$.createdAt").exists())
                         .andReturn()
                         .getResponse()
                         .getContentAsString();

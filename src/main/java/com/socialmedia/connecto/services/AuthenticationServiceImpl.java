@@ -82,10 +82,17 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         return new LoginResponseDTO(
                 token,
-                user.getRole().name(),
-                user.getName(),
                 user.getId(),
-                user.getPictureURL()
+                user.getName(),
+                user.getEmail(),
+                user.getGender(),
+                user.getBirthDate(),
+                user.getLocation(),
+                user.getBio(),
+                user.isPrivate(),
+                user.getRole(),
+                user.getPictureURL(),
+                user.getCreatedAt()
         );
     }
 
