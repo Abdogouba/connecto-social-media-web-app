@@ -1,4 +1,4 @@
-package com.socialmedia.connecto.services;
+package com.socialmedia.connecto.services.impl;
 
 import com.socialmedia.connecto.auth.JwtUtil;
 import com.socialmedia.connecto.dtos.LoginRequestDTO;
@@ -8,6 +8,7 @@ import com.socialmedia.connecto.models.Gender;
 import com.socialmedia.connecto.models.Role;
 import com.socialmedia.connecto.models.User;
 import com.socialmedia.connecto.repositories.UserRepository;
+import com.socialmedia.connecto.services.AuthenticationService;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;

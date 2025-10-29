@@ -3,7 +3,7 @@ package com.socialmedia.connecto.controllers;
 import com.socialmedia.connecto.dtos.LoginRequestDTO;
 import com.socialmedia.connecto.dtos.LoginResponseDTO;
 import com.socialmedia.connecto.dtos.UserRegistrationDTO;
-import com.socialmedia.connecto.services.AuthenticationServiceImpl;
+import com.socialmedia.connecto.services.impl.AuthenticationServiceImpl;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

@@ -1,0 +1,224 @@
+package com.socialmedia.connecto.integrationtests;
+
+import com.socialmedia.connecto.auth.JwtUtil;
+import com.socialmedia.connecto.models.Gender;
+import com.socialmedia.connecto.models.Role;
+import com.socialmedia.connecto.models.User;
+import com.socialmedia.connecto.repositories.UserRepository;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.http.MediaType;
+
+
+import java.time.LocalDate;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import org.springframework.security.test.context.support.WithMockUser;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+
+@SpringBootTest // loads the full application context
+@AutoConfigureMockMvc // enables MockMvc auto-configuration
+@ActiveProfiles("test") // use application-test.properties
+public class UserControllerTests {
+
+    @Autowired
+    private MockMvc mockMvc; // allows us to send fake HTTP requests
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private JwtUtil jwtUtil;
+
+    @BeforeEach
+    void cleanDB() {
+        this.userRepository.deleteAll(); // clean DB before each test
+    }
+
+//    Follow the AAA pattern:
+//
+//    Arrange → Set up data and mocks.
+//
+//    Act → Call the method you want to test.
+//
+//    Assert → Verify the result.
+//
+//    Naming convention:
+//
+//    methodName_ShouldDoSomething_WhenCondition()
+//
+//    test: HTTP status - response JSON - DB changes
+
+    @Test
+    @WithMockUser(username = "test@example.com", roles = {"USER"})
+    void editProfile_ShouldUpdateSuccessfully_WhenInputValid() throws Exception {
+        User user = new User();
+        user.setEmail("test@example.com");
+        user.setPassword(passwordEncoder.encode("12345678"));
+        user.setRole(Role.USER);
+        user.setName("Test User");
+        user.setBanned(false);
+        user.setPictureURL("url");
+        user.setGender(Gender.MALE);
+        user.setPrivate(false);
+        user.setBirthDate(LocalDate.of(2000, 1, 1));
+        user.setLocation("Saudi Arabia");
+        user.setBio("my bio");
+
+        userRepository.save(user);
+
+        String requestBody = """
+            {
+                "name": "Abdullah",
+                "location": "New Cairo, Cairo, Egypt",
+                "bio": "just coding",
+                "isPrivate": true,
+                "pictureURL": "new url"
+            }
+        """;
+
+        mockMvc.perform(put("/api/users/edit-profile")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Profile updated successfully"));
+
+        User updatedUser = userRepository.findByEmail(user.getEmail()).get();
+
+        assertEquals("Abdullah", updatedUser.getName());
+        assertEquals("New Cairo, Cairo, Egypt", updatedUser.getLocation());
+        assertEquals("just coding", updatedUser.getBio());
+        assertEquals("new url", updatedUser.getPictureURL());
+        assertTrue(updatedUser.isPrivate());
+
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com", roles = {"USER"})
+    void editProfile_ShouldFail_WhenNameIsBlank() throws Exception {
+        User user = new User();
+        user.setEmail("test@example.com");
+        user.setPassword(passwordEncoder.encode("12345678"));
+        user.setRole(Role.USER);
+        user.setName("Test User");
+        user.setBanned(false);
+        user.setPictureURL("url");
+        user.setGender(Gender.MALE);
+        user.setPrivate(false);
+        user.setBirthDate(LocalDate.of(2000, 1, 1));
+        user.setLocation("Saudi Arabia");
+        user.setBio("my bio");
+
+        userRepository.save(user);
+
+        String requestBody = """
+            {
+                "name": "",
+                "location": "location",
+                "bio": "bio",
+                "isPrivate": false,
+                "pictureURL": "url"
+            }
+        """;
+
+        mockMvc.perform(put("/api/users/edit-profile")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("Name is required"));
+
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com", roles = {"USER"})
+    void editProfile_ShouldUpdateSuccessfully_WhenInputValidWithSomeNulls() throws Exception {
+        User user = new User();
+        user.setEmail("test@example.com");
+        user.setPassword(passwordEncoder.encode("12345678"));
+        user.setRole(Role.USER);
+        user.setName("Test User");
+        user.setBanned(false);
+        user.setPictureURL("url");
+        user.setGender(Gender.MALE);
+        user.setPrivate(false);
+        user.setBirthDate(LocalDate.of(2000, 1, 1));
+        user.setLocation("Saudi Arabia");
+        user.setBio("my bio");
+
+        userRepository.save(user);
+
+        String requestBody = """
+            {
+                "name": "Test User",
+                "location": null,
+                "bio": null,
+                "isPrivate": false,
+                "pictureURL": null
+            }
+        """;
+
+        mockMvc.perform(put("/api/users/edit-profile")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Profile updated successfully"));
+
+        User updatedUser = userRepository.findByEmail(user.getEmail()).get();
+
+        assertEquals(user.getName(), updatedUser.getName());
+        assertNull(updatedUser.getLocation());
+        assertNull(updatedUser.getBio());
+        assertNull(updatedUser.getPictureURL());
+        assertFalse(updatedUser.isPrivate());
+
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com", roles = {"USER"})
+    void editProfile_ShouldFail_WhenIsPrivateIsNull() throws Exception {
+        User user = new User();
+        user.setEmail("test@example.com");
+        user.setPassword(passwordEncoder.encode("12345678"));
+        user.setRole(Role.USER);
+        user.setName("Test User");
+        user.setBanned(false);
+        user.setPictureURL("url");
+        user.setGender(Gender.MALE);
+        user.setPrivate(false);
+        user.setBirthDate(LocalDate.of(2000, 1, 1));
+        user.setLocation("Saudi Arabia");
+        user.setBio("my bio");
+
+        userRepository.save(user);
+
+        String requestBody = """
+            {
+                "name": "new name",
+                "location": "new location",
+                "bio": "new bio",
+                "isPrivate": null,
+                "pictureURL": "new url"
+            }
+        """;
+
+        mockMvc.perform(put("/api/users/edit-profile")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("IsPrivate is required"));
+
+    }
+
+
+}

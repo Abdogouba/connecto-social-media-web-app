@@ -1,4 +1,4 @@
-package com.socialmedia.connecto.services;
+package com.socialmedia.connecto.services.impl;
 
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
