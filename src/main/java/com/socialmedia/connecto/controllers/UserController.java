@@ -1,5 +1,6 @@
 package com.socialmedia.connecto.controllers;
 
+import com.socialmedia.connecto.dtos.ChangePasswordDTO;
 import com.socialmedia.connecto.dtos.EditProfileDTO;
 import com.socialmedia.connecto.services.UserService;
 import jakarta.validation.Valid;
@@ -27,6 +28,16 @@ public class UserController {
         try {
             userService.editProfile(dto);
             return ResponseEntity.ok("Profile updated successfully");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
+    @PutMapping("/change-password")
+    public ResponseEntity<String> changePassword(@Valid @RequestBody ChangePasswordDTO dto) {
+        try {
+            userService.changePassword(dto);
+            return ResponseEntity.ok("Password changed successfully");
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }

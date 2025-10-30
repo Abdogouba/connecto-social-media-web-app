@@ -220,5 +220,112 @@ public class UserControllerTests {
 
     }
 
+    @Test
+    @WithMockUser(username = "test@example.com", roles = {"USER"})
+    void changePassword_ShouldUpdatePassword_WhenCurrentPasswordIsCorrect() throws Exception {
+        User user = new User();
+        user.setEmail("test@example.com");
+        user.setPassword(passwordEncoder.encode("12345678"));
+        user.setRole(Role.USER);
+        user.setName("Test User");
+        user.setBanned(false);
+        user.setPictureURL("url");
+        user.setGender(Gender.MALE);
+        user.setPrivate(false);
+        user.setBirthDate(LocalDate.of(2000, 1, 1));
+        user.setLocation("Saudi Arabia");
+        user.setBio("my bio");
+
+        userRepository.save(user);
+
+        String requestBody = """
+            {
+                "currentPassword": "12345678",
+                "newPassword": "newPassword"
+            }
+        """;
+
+        mockMvc.perform(put("/api/users/change-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Password changed successfully"));
+
+        User updatedUser = userRepository.findByEmail(user.getEmail()).get();
+
+        assertTrue(passwordEncoder.matches("newPassword", updatedUser.getPassword()));
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com", roles = {"USER"})
+    void changePassword_ShouldFail_WhenCurrentPasswordIsInCorrect() throws Exception {
+        User user = new User();
+        user.setEmail("test@example.com");
+        user.setPassword(passwordEncoder.encode("12345678"));
+        user.setRole(Role.USER);
+        user.setName("Test User");
+        user.setBanned(false);
+        user.setPictureURL("url");
+        user.setGender(Gender.MALE);
+        user.setPrivate(false);
+        user.setBirthDate(LocalDate.of(2000, 1, 1));
+        user.setLocation("Saudi Arabia");
+        user.setBio("my bio");
+
+        userRepository.save(user);
+
+        String requestBody = """
+            {
+                "currentPassword": "currentPassword",
+                "newPassword": "newPassword"
+            }
+        """;
+
+        mockMvc.perform(put("/api/users/change-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("Current password is not correct"));
+
+        User updatedUser = userRepository.findByEmail(user.getEmail()).get();
+
+        assertTrue(passwordEncoder.matches("12345678", updatedUser.getPassword()));
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com", roles = {"USER"})
+    void changePassword_ShouldFail_WhenNewPasswordIsShort() throws Exception {
+        User user = new User();
+        user.setEmail("test@example.com");
+        user.setPassword(passwordEncoder.encode("12345678"));
+        user.setRole(Role.USER);
+        user.setName("Test User");
+        user.setBanned(false);
+        user.setPictureURL("url");
+        user.setGender(Gender.MALE);
+        user.setPrivate(false);
+        user.setBirthDate(LocalDate.of(2000, 1, 1));
+        user.setLocation("Saudi Arabia");
+        user.setBio("my bio");
+
+        userRepository.save(user);
+
+        String requestBody = """
+            {
+                "currentPassword": "12345678",
+                "newPassword": "new"
+            }
+        """;
+
+        mockMvc.perform(put("/api/users/change-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("New password must be at least 8 characters"));
+
+        User updatedUser = userRepository.findByEmail(user.getEmail()).get();
+
+        assertTrue(passwordEncoder.matches("12345678", updatedUser.getPassword()));
+    }
 
 }
