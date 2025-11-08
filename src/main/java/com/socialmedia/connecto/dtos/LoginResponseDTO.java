@@ -24,7 +24,6 @@ public class LoginResponseDTO {
     private String bio;
     private boolean isPrivate;
     private Role role;
-    private String pictureURL;
     private LocalDateTime createdAt;
 }
 

@@ -50,7 +50,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         user.setPrivate(false);
         user.setBanned(false);
         user.setRole(Role.USER);
-        user.setPictureURL(dto.getPictureURL());
 
         if (dto.getGender().equalsIgnoreCase("male"))
             user.setGender(Gender.MALE);
@@ -92,7 +91,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 user.getBio(),
                 user.isPrivate(),
                 user.getRole(),
-                user.getPictureURL(),
                 user.getCreatedAt()
         );
     }

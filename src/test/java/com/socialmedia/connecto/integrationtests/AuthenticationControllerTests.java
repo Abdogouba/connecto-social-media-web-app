@@ -71,8 +71,7 @@ public class AuthenticationControllerTests {
                 "gender": "MALE",
                 "birthDate": "2002-04-11",
                 "location": "New Cairo, Cairo, Egypt",
-                "bio": "just coding",
-                "pictureURL": "url"
+                "bio": "just coding"
             }
         """;
 
@@ -90,7 +89,6 @@ public class AuthenticationControllerTests {
         assertEquals("MALE", user.get().getGender().name());
         assertEquals("New Cairo, Cairo, Egypt", user.get().getLocation());
         assertEquals("just coding", user.get().getBio());
-        assertEquals("url", user.get().getPictureURL());
         assertEquals(LocalDate.parse("2002-04-11"), user.get().getBirthDate());
         assertEquals(Role.USER, user.get().getRole());
         assertTrue(passwordEncoder.matches("mypassword123", user.get().getPassword()));
@@ -125,7 +123,6 @@ public class AuthenticationControllerTests {
         assertEquals("MALE", user.get().getGender().name());
         assertNull(user.get().getLocation());
         assertNull(user.get().getBio());
-        assertNull(user.get().getPictureURL());
         assertNull(user.get().getBirthDate());
         assertEquals(Role.USER, user.get().getRole());
         assertTrue(passwordEncoder.matches("mypassword123", user.get().getPassword()));
@@ -136,11 +133,16 @@ public class AuthenticationControllerTests {
 
     @Test
     void register_ShouldFail_WhenEmailAlreadyExists() throws Exception {
+        User user = new User();
+        user.setEmail("duplicate@example.com");
+        user.setPassword(passwordEncoder.encode("12345678"));
+        user.setRole(Role.USER);
+        user.setName("Test User");
+        user.setBanned(false);
+        user.setGender(Gender.MALE);
+        user.setPrivate(false);
 
-        this.userRepository.save(new User(null, "Abdullah",
-                "duplicate@example.com", "password",
-                Gender.MALE, null, null, null,
-                false, false, Role.USER, null, null));
+        userRepository.save(user);
 
         String requestBody = """
             {
@@ -150,8 +152,7 @@ public class AuthenticationControllerTests {
                 "gender": "MALE",
                 "birthDate": "2002-04-11",
                 "location": "New Cairo, Cairo, Egypt",
-                "bio": "just coding",
-                "pictureURL": "url"
+                "bio": "just coding"
             }
         """;
 
@@ -175,8 +176,7 @@ public class AuthenticationControllerTests {
                 "gender": "M",
                 "birthDate": "2002-04-11",
                 "location": "New Cairo, Cairo, Egypt",
-                "bio": "just coding",
-                "pictureURL": "url"
+                "bio": "just coding"
             }
         """;
 
@@ -200,8 +200,7 @@ public class AuthenticationControllerTests {
                 "gender": "MALE",
                 "birthDate": "2002-04-11",
                 "location": "New Cairo, Cairo, Egypt",
-                "bio": "just coding",
-                "pictureURL": "url"
+                "bio": "just coding"
             }
         """;
 
@@ -222,7 +221,6 @@ public class AuthenticationControllerTests {
         user.setRole(Role.USER);
         user.setName("Test User");
         user.setBanned(false);
-        user.setPictureURL("url");
         user.setGender(Gender.MALE);
         user.setPrivate(false);
 
@@ -249,9 +247,8 @@ public class AuthenticationControllerTests {
                         .andExpect(jsonPath("$.birthDate").value(user.getBirthDate()))
                         .andExpect(jsonPath("$.location").value(user.getLocation()))
                         .andExpect(jsonPath("$.bio").value(user.getBio()))
-                        .andExpect(jsonPath("$.private").value(user.isPrivate()))
+                        .andExpect(jsonPath("$.private").value((Boolean)false))
                         .andExpect(jsonPath("$.role").value(user.getRole().name()))
-                        .andExpect(jsonPath("$.pictureURL").value(user.getPictureURL()))
                         .andExpect(jsonPath("$.createdAt").exists())
                         .andReturn()
                         .getResponse()
@@ -290,7 +287,6 @@ public class AuthenticationControllerTests {
         user.setRole(Role.USER);
         user.setName("Test User");
         user.setBanned(false);
-        user.setPictureURL("url");
         user.setGender(Gender.MALE);
         user.setPrivate(false);
 
@@ -319,7 +315,6 @@ public class AuthenticationControllerTests {
         user.setRole(Role.USER);
         user.setName("Test User");
         user.setBanned(true);
-        user.setPictureURL("url");
         user.setGender(Gender.MALE);
         user.setPrivate(false);
 
@@ -336,6 +331,33 @@ public class AuthenticationControllerTests {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
                 .andExpect(status().isUnauthorized())
+                .andExpect(content().string("User is currently banned from the platform"));
+
+    }
+
+    @Test
+    void userRoute_ShouldFail_WhenUserIsBanned() throws Exception {
+        User user = new User();
+        user.setEmail("test@example.com");
+        user.setPassword(passwordEncoder.encode("12345678"));
+        user.setRole(Role.USER);
+        user.setName("Test User");
+        user.setBanned(false);
+        user.setGender(Gender.MALE);
+        user.setPrivate(false);
+
+        userRepository.save(user);
+
+        String token = jwtUtil.generateToken(user.getEmail(), user.getRole().name());
+
+        User savedUser = userRepository.findByEmail(user.getEmail()).get();
+        savedUser.setBanned(true);
+
+        userRepository.save(savedUser);
+
+        mockMvc.perform(get("/api/users/test")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isForbidden())
                 .andExpect(content().string("User is currently banned from the platform"));
 
     }
@@ -361,7 +383,6 @@ public class AuthenticationControllerTests {
         user.setRole(role);
         user.setName("Test User");
         user.setBanned(false);
-        user.setPictureURL("url");
         user.setGender(Gender.MALE);
         user.setPrivate(false);
 
@@ -423,7 +444,6 @@ public class AuthenticationControllerTests {
         user.setRole(Role.USER);
         user.setName("Test User");
         user.setBanned(false);
-        user.setPictureURL("url");
         user.setGender(Gender.MALE);
         user.setPrivate(false);
 
@@ -448,7 +468,6 @@ public class AuthenticationControllerTests {
         user.setRole(Role.USER);
         user.setName("Test User");
         user.setBanned(false);
-        user.setPictureURL("url");
         user.setGender(Gender.MALE);
         user.setPrivate(false);
 

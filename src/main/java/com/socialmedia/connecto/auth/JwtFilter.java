@@ -1,5 +1,7 @@
 package com.socialmedia.connecto.auth;
 
+import com.socialmedia.connecto.models.User;
+import com.socialmedia.connecto.repositories.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,9 +21,11 @@ import java.util.List;
 public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
+    private final UserRepository userRepository;
 
-    public JwtFilter(JwtUtil jwtUtil) {
+    public JwtFilter(JwtUtil jwtUtil, UserRepository userRepository) {
         this.jwtUtil = jwtUtil;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -48,6 +52,14 @@ public class JwtFilter extends OncePerRequestFilter {
             }
 
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+
+                // Check if user is banned
+                User user = userRepository.findByEmail(username).orElse(null);
+                if (user != null && user.isBanned()) {
+                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    response.getWriter().write("User is currently banned from the platform");
+                    return; // stop filter chain
+                }
 
                 // Create authorities from token role
                 var authorities = List.of(

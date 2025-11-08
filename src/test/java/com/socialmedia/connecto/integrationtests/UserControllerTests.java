@@ -69,7 +69,6 @@ public class UserControllerTests {
         user.setRole(Role.USER);
         user.setName("Test User");
         user.setBanned(false);
-        user.setPictureURL("url");
         user.setGender(Gender.MALE);
         user.setPrivate(false);
         user.setBirthDate(LocalDate.of(2000, 1, 1));
@@ -83,8 +82,7 @@ public class UserControllerTests {
                 "name": "Abdullah",
                 "location": "New Cairo, Cairo, Egypt",
                 "bio": "just coding",
-                "isPrivate": true,
-                "pictureURL": "new url"
+                "isPrivate": true
             }
         """;
 
@@ -99,7 +97,6 @@ public class UserControllerTests {
         assertEquals("Abdullah", updatedUser.getName());
         assertEquals("New Cairo, Cairo, Egypt", updatedUser.getLocation());
         assertEquals("just coding", updatedUser.getBio());
-        assertEquals("new url", updatedUser.getPictureURL());
         assertTrue(updatedUser.isPrivate());
 
     }
@@ -113,7 +110,6 @@ public class UserControllerTests {
         user.setRole(Role.USER);
         user.setName("Test User");
         user.setBanned(false);
-        user.setPictureURL("url");
         user.setGender(Gender.MALE);
         user.setPrivate(false);
         user.setBirthDate(LocalDate.of(2000, 1, 1));
@@ -127,8 +123,7 @@ public class UserControllerTests {
                 "name": "",
                 "location": "location",
                 "bio": "bio",
-                "isPrivate": false,
-                "pictureURL": "url"
+                "isPrivate": false
             }
         """;
 
@@ -149,7 +144,6 @@ public class UserControllerTests {
         user.setRole(Role.USER);
         user.setName("Test User");
         user.setBanned(false);
-        user.setPictureURL("url");
         user.setGender(Gender.MALE);
         user.setPrivate(false);
         user.setBirthDate(LocalDate.of(2000, 1, 1));
@@ -163,8 +157,7 @@ public class UserControllerTests {
                 "name": "Test User",
                 "location": null,
                 "bio": null,
-                "isPrivate": false,
-                "pictureURL": null
+                "isPrivate": false
             }
         """;
 
@@ -179,7 +172,6 @@ public class UserControllerTests {
         assertEquals(user.getName(), updatedUser.getName());
         assertNull(updatedUser.getLocation());
         assertNull(updatedUser.getBio());
-        assertNull(updatedUser.getPictureURL());
         assertFalse(updatedUser.isPrivate());
 
     }
@@ -193,7 +185,6 @@ public class UserControllerTests {
         user.setRole(Role.USER);
         user.setName("Test User");
         user.setBanned(false);
-        user.setPictureURL("url");
         user.setGender(Gender.MALE);
         user.setPrivate(false);
         user.setBirthDate(LocalDate.of(2000, 1, 1));
@@ -207,8 +198,7 @@ public class UserControllerTests {
                 "name": "new name",
                 "location": "new location",
                 "bio": "new bio",
-                "isPrivate": null,
-                "pictureURL": "new url"
+                "isPrivate": null
             }
         """;
 
@@ -229,7 +219,6 @@ public class UserControllerTests {
         user.setRole(Role.USER);
         user.setName("Test User");
         user.setBanned(false);
-        user.setPictureURL("url");
         user.setGender(Gender.MALE);
         user.setPrivate(false);
         user.setBirthDate(LocalDate.of(2000, 1, 1));
@@ -265,7 +254,6 @@ public class UserControllerTests {
         user.setRole(Role.USER);
         user.setName("Test User");
         user.setBanned(false);
-        user.setPictureURL("url");
         user.setGender(Gender.MALE);
         user.setPrivate(false);
         user.setBirthDate(LocalDate.of(2000, 1, 1));
@@ -301,7 +289,6 @@ public class UserControllerTests {
         user.setRole(Role.USER);
         user.setName("Test User");
         user.setBanned(false);
-        user.setPictureURL("url");
         user.setGender(Gender.MALE);
         user.setPrivate(false);
         user.setBirthDate(LocalDate.of(2000, 1, 1));

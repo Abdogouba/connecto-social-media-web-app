@@ -38,7 +38,6 @@ public class UserRegistrationDTO {
     @Size(max = 300, message = "Bio should be 300 characters max")
     private String bio;
 
-    private String pictureURL;
 }
 
 

@@ -30,6 +30,4 @@ public class EditProfileDTO {
     @NotNull(message = "IsPrivate is required")
     private Boolean isPrivate;
 
-    private String pictureURL;
-
 }
