@@ -1,10 +1,7 @@
 package com.socialmedia.connecto.services.impl;
 
 import com.socialmedia.connecto.dtos.ChangePasswordDTO;
-import com.socialmedia.connecto.dtos.CreatePostRequestDTO;
-import com.socialmedia.connecto.dtos.CreatePostResponseDTO;
 import com.socialmedia.connecto.dtos.EditProfileDTO;
-import com.socialmedia.connecto.models.Post;
 import com.socialmedia.connecto.models.User;
 import com.socialmedia.connecto.repositories.UserRepository;
 import com.socialmedia.connecto.services.UserService;

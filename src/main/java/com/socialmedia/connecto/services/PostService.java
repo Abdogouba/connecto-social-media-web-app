@@ -1,10 +1,14 @@
 package com.socialmedia.connecto.services;
 
-import com.socialmedia.connecto.dtos.CreatePostRequestDTO;
-import com.socialmedia.connecto.dtos.CreatePostResponseDTO;
+import com.socialmedia.connecto.dtos.PostRequestDTO;
+import com.socialmedia.connecto.dtos.PostResponseDTO;
+
+import java.nio.file.AccessDeniedException;
 
 public interface PostService {
 
-    CreatePostResponseDTO createPost(CreatePostRequestDTO dto);
+    PostResponseDTO createPost(PostRequestDTO dto);
+
+    PostResponseDTO updatePost(Long postId, PostRequestDTO dto) throws AccessDeniedException;
 
 }
