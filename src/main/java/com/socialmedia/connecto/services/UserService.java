@@ -2,6 +2,7 @@ package com.socialmedia.connecto.services;
 
 import com.socialmedia.connecto.dtos.ChangePasswordDTO;
 import com.socialmedia.connecto.dtos.EditProfileDTO;
+import com.socialmedia.connecto.models.User;
 
 public interface UserService {
 
@@ -9,4 +10,5 @@ public interface UserService {
 
     void changePassword(ChangePasswordDTO dto);
 
+    User getUser();
 }

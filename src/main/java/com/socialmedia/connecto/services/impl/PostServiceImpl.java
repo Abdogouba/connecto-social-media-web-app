@@ -7,6 +7,7 @@ import com.socialmedia.connecto.models.User;
 import com.socialmedia.connecto.repositories.PostRepository;
 import com.socialmedia.connecto.repositories.UserRepository;
 import com.socialmedia.connecto.services.PostService;
+import com.socialmedia.connecto.services.UserService;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,27 +19,18 @@ import java.util.NoSuchElementException;
 public class PostServiceImpl implements PostService {
 
     private final PostRepository postRepository;
-    private final UserRepository userRepository;
+    private final UserService userService;
 
-    public PostServiceImpl(PostRepository postRepository, UserRepository userRepository) {
+    public PostServiceImpl(PostRepository postRepository, UserService userService) {
         this.postRepository = postRepository;
-        this.userRepository = userRepository;
-    }
-
-    private User getUser() {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        return user;
+        this.userService = userService;
     }
 
     @Override
     public PostResponseDTO createPost(PostRequestDTO dto) {
         Post post = new Post();
         post.setContent(dto.getContent());
-        post.setUser(getUser());
+        post.setUser(userService.getUser());
 
         Post savedPost = postRepository.save(post);
 
@@ -51,7 +43,7 @@ public class PostServiceImpl implements PostService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new NoSuchElementException("Post not found"));
 
-        User user = getUser();
+        User user = userService.getUser();
 
         if (!post.getUser().getId().equals(user.getId()))
             throw new AccessDeniedException("You can only edit your posts");

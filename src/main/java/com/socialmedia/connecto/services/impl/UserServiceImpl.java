@@ -32,7 +32,7 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
     }
 
-    private User getUser() {
+    public User getUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
 
         User user = userRepository.findByEmail(email)
