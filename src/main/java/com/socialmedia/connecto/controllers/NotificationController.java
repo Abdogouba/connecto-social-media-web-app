@@ -3,10 +3,7 @@ package com.socialmedia.connecto.controllers;
 import com.socialmedia.connecto.dtos.PagedNotificationDTO;
 import com.socialmedia.connecto.services.NotificationService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/notifications")
@@ -31,5 +28,12 @@ public class NotificationController {
         long count = notificationService.countUnreadNotifications();
         return ResponseEntity.ok(count);
     }
+
+    @PatchMapping("/mark-all-read")
+    public ResponseEntity<String> markMyNotificationsAsRead() {
+        notificationService.markMyNotificationsAsRead();
+        return ResponseEntity.ok("Marked all notifications of user as read");
+    }
+
 }
 

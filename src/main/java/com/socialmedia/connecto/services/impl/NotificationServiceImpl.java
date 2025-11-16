@@ -61,4 +61,10 @@ public class NotificationServiceImpl implements NotificationService {
         return notificationRepository.countByReceiverAndIsReadFalse(user);
     }
 
+    @Override
+    public void markMyNotificationsAsRead() {
+        User  user = userService.getUser();
+        notificationRepository.markMyNotificationsAsRead(user);
+    }
+
 }

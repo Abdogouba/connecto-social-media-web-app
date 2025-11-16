@@ -9,4 +9,6 @@ public interface NotificationService {
 
     long countUnreadNotifications();
 
+    void markMyNotificationsAsRead();
+
 }
