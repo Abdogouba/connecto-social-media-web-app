@@ -7,5 +7,6 @@ public interface NotificationService {
 
     PagedNotificationDTO getMyNotifications(int page, int size);
 
+    long countUnreadNotifications();
 
 }

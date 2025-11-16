@@ -128,4 +128,87 @@ public class NotificationControllerTests {
                 .andExpect(jsonPath("$.totalItems").value(0));
     }
 
+    @Test
+    @WithMockUser(username = "receiver@example.com", roles = {"USER"})
+    void countUnreadNotifications_ShouldReturnCorrectCount_WhenThereIsUnreadNotifications() throws Exception {
+
+        // Unread notification
+        Notification notification1 = new Notification();
+        notification1.setReceiver(receiver);
+        notification1.setSender(sender);
+        notification1.setType(NotificationType.COMMENT);
+        notification1.setReferenceId(101L);
+        notification1.setRead(false);
+        notificationRepository.save(notification1);
+
+        // Another unread notification
+        Notification notification2 = new Notification();
+        notification2.setReceiver(receiver);
+        notification2.setSender(sender);
+        notification2.setType(NotificationType.COMMENT);
+        notification2.setReferenceId(10L);
+        notification2.setRead(false);
+        notificationRepository.save(notification2);
+
+        // Read notification (should not be counted)
+        Notification notification3 = new Notification();
+        notification3.setReceiver(receiver);
+        notification3.setSender(sender);
+        notification3.setType(NotificationType.COMMENT);
+        notification3.setReferenceId(11L);
+        notification3.setRead(true);
+        notificationRepository.save(notification3);
+
+        mockMvc.perform(get("/api/notifications/unread-count")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().string("2"));
+    }
+
+    @Test
+    @WithMockUser(username = "receiver@example.com", roles = {"USER"})
+    void countUnreadNotifications_ShouldReturnZero_WhenThereIsNoUnreadNotifications() throws Exception {
+
+        // Unread notification
+        Notification notification1 = new Notification();
+        notification1.setReceiver(receiver);
+        notification1.setSender(sender);
+        notification1.setType(NotificationType.COMMENT);
+        notification1.setReferenceId(101L);
+        notification1.setRead(true);
+        notificationRepository.save(notification1);
+
+        // Another unread notification
+        Notification notification2 = new Notification();
+        notification2.setReceiver(receiver);
+        notification2.setSender(sender);
+        notification2.setType(NotificationType.COMMENT);
+        notification2.setReferenceId(10L);
+        notification2.setRead(true);
+        notificationRepository.save(notification2);
+
+        // Read notification (should not be counted)
+        Notification notification3 = new Notification();
+        notification3.setReceiver(receiver);
+        notification3.setSender(sender);
+        notification3.setType(NotificationType.COMMENT);
+        notification3.setReferenceId(11L);
+        notification3.setRead(true);
+        notificationRepository.save(notification3);
+
+        mockMvc.perform(get("/api/notifications/unread-count")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().string("0"));
+    }
+
+    @Test
+    @WithMockUser(username = "receiver@example.com", roles = {"USER"})
+    void countUnreadNotifications_ShouldReturnZero_WhenThereIsNoNotifications() throws Exception {
+        mockMvc.perform(get("/api/notifications/unread-count")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().string("0"));
+    }
+
 }

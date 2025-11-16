@@ -55,4 +55,10 @@ public class NotificationServiceImpl implements NotificationService {
         );
     }
 
+    @Override
+    public long countUnreadNotifications() {
+        User user = userService.getUser();
+        return notificationRepository.countByReceiverAndIsReadFalse(user);
+    }
+
 }

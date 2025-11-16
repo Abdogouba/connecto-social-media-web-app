@@ -25,5 +25,11 @@ public class NotificationController {
         PagedNotificationDTO response = notificationService.getMyNotifications(page, size);
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/unread-count")
+    public ResponseEntity<Long> countUnreadNotifications() {
+        long count = notificationService.countUnreadNotifications();
+        return ResponseEntity.ok(count);
+    }
 }
 

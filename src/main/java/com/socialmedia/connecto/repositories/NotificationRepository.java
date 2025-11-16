@@ -13,5 +13,7 @@ public interface NotificationRepository extends JpaRepository<Notification,Long>
     // Get all notifications for a specific receiver, ordered by newest first
     Page<Notification> findAllByReceiverOrderByCreatedAtDesc(User receiver, Pageable pageable);
 
+    // Count unread notifications of a user
+    long countByReceiverAndIsReadFalse(User receiver);
 
 }
