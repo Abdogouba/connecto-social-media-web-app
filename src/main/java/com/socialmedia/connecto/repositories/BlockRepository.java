@@ -12,4 +12,7 @@ public interface BlockRepository extends JpaRepository<Block, Long> {
 
     boolean existsByBlockerAndBlocked(User blocker, User blocked);
 
+    void deleteByBlockerIdAndBlockedId(Long blockerId, Long blockedId);
+
+
 }

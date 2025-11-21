@@ -133,11 +133,7 @@ public class BlockControllerTests {
     @Test
     @WithMockUser(username = "blocker@example.com")
     public void block_ShouldReturn409Conflict_WhenBlockAlreadyExists() throws Exception {
-        Block block = new Block();
-        block.setBlocker(blocker);
-        block.setBlocked(blocked);
-        block = blockRepository.save(block);
-        followRepository.deleteAll();
+        createAndSaveBlock();
 
         mockMvc.perform(post("/api/blocks/" + blocked.getId())
                         .contentType(MediaType.APPLICATION_JSON))
@@ -145,6 +141,14 @@ public class BlockControllerTests {
                 .andExpect(content().string("This user is already blocked"));
 
         assertEquals(1, blockRepository.count());
+    }
+
+    private void createAndSaveBlock() {
+        Block block = new Block();
+        block.setBlocker(blocker);
+        block.setBlocked(blocked);
+        blockRepository.save(block);
+        followRepository.deleteAll();
     }
 
     @Test
@@ -159,6 +163,30 @@ public class BlockControllerTests {
 
         assertTrue(blockExists);
         assertEquals(0, followRepository.count());
+    }
+
+    @Test
+    @WithMockUser(username = "blocker@example.com")
+    public void unblock_ShouldDeleteBlock_WhenValidBlockedUserId() throws Exception {
+        createAndSaveBlock();
+
+        mockMvc.perform(delete("/api/blocks/" + blocked.getId())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNoContent());
+
+        assertEquals(0, blockRepository.count());
+    }
+
+    @Test
+    @WithMockUser(username = "blocker@example.com")
+    public void unblock_ShouldReturn204NoContent_WhenInValidBlockedUserId() throws Exception {
+        createAndSaveBlock();
+
+        mockMvc.perform(delete("/api/blocks/" + 11111)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNoContent());
+
+        assertEquals(1, blockRepository.count());
     }
 
 }

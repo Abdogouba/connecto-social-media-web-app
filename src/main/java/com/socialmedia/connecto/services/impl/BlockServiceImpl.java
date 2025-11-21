@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.file.AccessDeniedException;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 
 @Service
 public class BlockServiceImpl implements BlockService {
@@ -54,6 +55,13 @@ public class BlockServiceImpl implements BlockService {
 
         followService.removeFollowRelationshipsIfExists(currentUser, target);
         followRequestService.removeFollowRequestRelationshipsIfExists(currentUser, target);
+    }
+
+    @Override
+    @Transactional
+    public void unblock(Long id) {
+        User currentUser = userService.getCurrentUser();
+        blockRepository.deleteByBlockerIdAndBlockedId(currentUser.getId(), id);
     }
 
 }
