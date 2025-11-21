@@ -28,15 +28,9 @@ public class PostController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity updatePost(@PathVariable Long id, @Valid @RequestBody PostRequestDTO dto) {
-        try {
-            PostResponseDTO responseDTO = postService.updatePost(id, dto);
-            return ResponseEntity.ok(responseDTO);
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        } catch (AccessDeniedException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
-        }
+    public ResponseEntity updatePost(@PathVariable Long id, @Valid @RequestBody PostRequestDTO dto) throws AccessDeniedException {
+        PostResponseDTO responseDTO = postService.updatePost(id, dto);
+        return ResponseEntity.ok(responseDTO);
     }
 
 }

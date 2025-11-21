@@ -12,6 +12,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import org.springframework.data.domain.Pageable;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -28,7 +29,7 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     public PagedNotificationDTO getMyNotifications(int page, int size) {
-        User user = userService.getUser();
+        User user = userService.getCurrentUser();
 
         Pageable pageable = PageRequest.of(page, size);
 
@@ -57,13 +58,13 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     public long countUnreadNotifications() {
-        User user = userService.getUser();
+        User user = userService.getCurrentUser();
         return notificationRepository.countByReceiverAndIsReadFalse(user);
     }
 
     @Override
     public void markMyNotificationsAsRead() {
-        User  user = userService.getUser();
+        User  user = userService.getCurrentUser();
         notificationRepository.markMyNotificationsAsRead(user);
     }
 

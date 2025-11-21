@@ -64,6 +64,25 @@ public class User {
     @OneToMany(mappedBy = "sender", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private List<Notification> sentNotifications = new ArrayList<>();
 
+    @OneToMany(mappedBy = "follower", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<Follow> following = new ArrayList<>();
+
+    @OneToMany(mappedBy = "followed", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<Follow> followers = new ArrayList<>();
+
+    @OneToMany(mappedBy = "follower", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<FollowRequest> followRequestsSent = new ArrayList<>();
+
+    @OneToMany(mappedBy = "followed", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<FollowRequest> followRequestsReceived = new ArrayList<>();
+
+    @OneToMany(mappedBy = "blocker", cascade = CascadeType.REMOVE)
+    private List<Block> blocksMade = new ArrayList<>();
+
+    @OneToMany(mappedBy = "blocked", cascade = CascadeType.REMOVE)
+    private List<Block> blocksReceived = new ArrayList<>();
+
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();

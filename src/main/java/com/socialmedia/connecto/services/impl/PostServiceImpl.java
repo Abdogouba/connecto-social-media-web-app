@@ -5,10 +5,8 @@ import com.socialmedia.connecto.dtos.PostResponseDTO;
 import com.socialmedia.connecto.models.Post;
 import com.socialmedia.connecto.models.User;
 import com.socialmedia.connecto.repositories.PostRepository;
-import com.socialmedia.connecto.repositories.UserRepository;
 import com.socialmedia.connecto.services.PostService;
 import com.socialmedia.connecto.services.UserService;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,7 +28,7 @@ public class PostServiceImpl implements PostService {
     public PostResponseDTO createPost(PostRequestDTO dto) {
         Post post = new Post();
         post.setContent(dto.getContent());
-        post.setUser(userService.getUser());
+        post.setUser(userService.getCurrentUser());
 
         Post savedPost = postRepository.save(post);
 
@@ -38,19 +36,17 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    @Transactional
     public PostResponseDTO updatePost(Long postId, PostRequestDTO dto) throws AccessDeniedException {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new NoSuchElementException("Post not found"));
 
-        User user = userService.getUser();
+        User user = userService.getCurrentUser();
 
         if (!post.getUser().getId().equals(user.getId()))
             throw new AccessDeniedException("You can only edit your posts");
 
-        if (post.getContent().equals(dto.getContent())) {
+        if (post.getContent().equals(dto.getContent()))
             return mapPostToResponseDTO(post);
-        }
 
         post.setContent(dto.getContent());
 

@@ -159,7 +159,7 @@ public class AuthenticationControllerTests {
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isConflict())
                 .andExpect(content().string("Email already registered"));
 
         assertEquals(1, userRepository.count());
@@ -275,7 +275,7 @@ public class AuthenticationControllerTests {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
                 .andExpect(status().isUnauthorized())
-                .andExpect(content().string("Invalid email or password"));
+                .andExpect(content().string("Bad credentials"));
 
     }
 
@@ -303,7 +303,7 @@ public class AuthenticationControllerTests {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
                 .andExpect(status().isUnauthorized())
-                .andExpect(content().string("Invalid email or password"));
+                .andExpect(content().string("Bad credentials"));
 
     }
 
@@ -330,7 +330,7 @@ public class AuthenticationControllerTests {
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
-                .andExpect(status().isUnauthorized())
+                .andExpect(status().isForbidden())
                 .andExpect(content().string("User is currently banned from the platform"));
 
     }

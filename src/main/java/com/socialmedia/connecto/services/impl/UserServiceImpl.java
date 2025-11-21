@@ -8,6 +8,10 @@ import com.socialmedia.connecto.services.UserService;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.NoSuchElementException;
+import java.util.Optional;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -22,7 +26,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void editProfile(EditProfileDTO dto) {
-        User user = getUser();
+        User user = getCurrentUser();
 
         user.setName(dto.getName());
         user.setLocation(dto.getLocation());
@@ -32,21 +36,26 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
     }
 
-    public User getUser() {
+    public User getCurrentUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
 
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new NoSuchElementException("User not found"));
 
         return user;
     }
 
     @Override
+    public Optional<User> getUserById(Long id) {
+        return userRepository.findById(id);
+    }
+
+    @Override
     public void changePassword(ChangePasswordDTO dto) {
-        User user = getUser();
+        User user = getCurrentUser();
 
         if (!passwordEncoder.matches(dto.getCurrentPassword(), user.getPassword()))
-            throw new RuntimeException("Current password is not correct");
+            throw new IllegalArgumentException("Current password is not correct");
 
         user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
 

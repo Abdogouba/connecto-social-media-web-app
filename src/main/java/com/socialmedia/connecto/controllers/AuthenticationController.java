@@ -20,23 +20,15 @@ public class AuthenticationController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity register(@Valid @RequestBody UserRegistrationDTO dto) {
-        try {
-            this.authenticationService.register(dto);
-            return ResponseEntity.status(HttpStatus.CREATED).body("User registered successfully");
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        }
+    public ResponseEntity<String> register(@Valid @RequestBody UserRegistrationDTO dto) {
+        this.authenticationService.register(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body("User registered successfully");
     }
 
     @PostMapping("/login")
-    public ResponseEntity login(@Valid @RequestBody LoginRequestDTO dto) {
-        try {
-            LoginResponseDTO response = authenticationService.login(dto);
-            return ResponseEntity.ok(response);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
-        }
+    public ResponseEntity login(@Valid @RequestBody LoginRequestDTO dto) throws Exception {
+        LoginResponseDTO response = authenticationService.login(dto);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/forgot-password")

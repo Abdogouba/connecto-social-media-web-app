@@ -8,7 +8,7 @@ public interface AuthenticationService {
 
     void register(UserRegistrationDTO dto);
 
-    LoginResponseDTO login(LoginRequestDTO dto);
+    LoginResponseDTO login(LoginRequestDTO dto) throws Exception;
 
     void forgotPassword(String email);
 

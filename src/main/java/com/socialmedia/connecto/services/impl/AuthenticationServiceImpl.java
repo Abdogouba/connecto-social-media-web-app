@@ -14,7 +14,10 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.file.AccessDeniedException;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -37,7 +40,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     public void register(UserRegistrationDTO dto) {
         if (this.userRepository.existsByEmail(dto.getEmail()))
-            throw new RuntimeException("Email already registered");
+            throw new IllegalStateException("Email already registered");
 
         User user = new User();
         user.setId(null);
@@ -56,27 +59,23 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         else if (dto.getGender().equalsIgnoreCase("female"))
             user.setGender(Gender.FEMALE);
         else
-            throw new RuntimeException("Invalid gender");
+            throw new IllegalArgumentException("Invalid gender");
 
         this.userRepository.save(user);
 
     }
 
     @Override
-    public LoginResponseDTO login(LoginRequestDTO dto) {
-        try {
-            authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(dto.getEmail(), dto.getPassword())
-            );
-        } catch (BadCredentialsException e) {
-            throw new RuntimeException("Invalid email or password");
-        }
+    public LoginResponseDTO login(LoginRequestDTO dto) throws Exception {
+        // throws bad credentials exception if invalid email or password
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(dto.getEmail(), dto.getPassword())
+        );
 
-        User user = userRepository.findByEmail(dto.getEmail())
-                .orElseThrow(() -> new RuntimeException("Invalid email or password"));
+        User user = userRepository.findByEmail(dto.getEmail()).get();
 
         if (user.isBanned())
-            throw new RuntimeException("User is currently banned from the platform");
+            throw new AccessDeniedException("User is currently banned from the platform");
 
         String token = jwtUtil.generateToken(user.getEmail(), user.getRole().name());
 

@@ -25,22 +25,14 @@ public class UserController {
 
     @PutMapping("/edit-profile")
     public ResponseEntity<String> editProfile(@Valid @RequestBody EditProfileDTO dto) {
-        try {
-            userService.editProfile(dto);
-            return ResponseEntity.ok("Profile updated successfully");
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        }
+        userService.editProfile(dto);
+        return ResponseEntity.ok("Profile updated successfully");
     }
 
     @PutMapping("/change-password")
     public ResponseEntity<String> changePassword(@Valid @RequestBody ChangePasswordDTO dto) {
-        try {
-            userService.changePassword(dto);
-            return ResponseEntity.ok("Password changed successfully");
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        }
+        userService.changePassword(dto);
+        return ResponseEntity.ok("Password changed successfully");
     }
 
 }
