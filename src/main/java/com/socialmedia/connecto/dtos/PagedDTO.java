@@ -9,8 +9,8 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class PagedNotificationDTO {
-    private List<NotificationDTO> notifications;
+public class PagedDTO<T> {
+    private List<T> list;
     private int currentPage;
     private int totalPages;
     private long totalItems;

@@ -1,7 +1,7 @@
 package com.socialmedia.connecto.services.impl;
 
 import com.socialmedia.connecto.dtos.NotificationDTO;
-import com.socialmedia.connecto.dtos.PagedNotificationDTO;
+import com.socialmedia.connecto.dtos.PagedDTO;
 import com.socialmedia.connecto.models.Notification;
 import com.socialmedia.connecto.models.User;
 import com.socialmedia.connecto.repositories.NotificationRepository;
@@ -12,7 +12,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import org.springframework.data.domain.Pageable;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -28,7 +27,7 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    public PagedNotificationDTO getMyNotifications(int page, int size) {
+    public PagedDTO<NotificationDTO> getMyNotifications(int page, int size) {
         User user = userService.getCurrentUser();
 
         Pageable pageable = PageRequest.of(page, size);
@@ -48,7 +47,7 @@ public class NotificationServiceImpl implements NotificationService {
             return dto;
         }).toList();
 
-        return new PagedNotificationDTO(
+        return new PagedDTO<NotificationDTO>(
                 dtos,
                 notificationPage.getNumber(),
                 notificationPage.getTotalPages(),

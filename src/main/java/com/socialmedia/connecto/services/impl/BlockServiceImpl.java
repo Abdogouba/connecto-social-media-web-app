@@ -1,6 +1,10 @@
 package com.socialmedia.connecto.services.impl;
 
+import com.socialmedia.connecto.dtos.BlockedUserDTO;
+import com.socialmedia.connecto.dtos.NotificationDTO;
+import com.socialmedia.connecto.dtos.PagedDTO;
 import com.socialmedia.connecto.models.Block;
+import com.socialmedia.connecto.models.Notification;
 import com.socialmedia.connecto.models.Role;
 import com.socialmedia.connecto.models.User;
 import com.socialmedia.connecto.repositories.BlockRepository;
@@ -8,11 +12,15 @@ import com.socialmedia.connecto.services.BlockService;
 import com.socialmedia.connecto.services.FollowRequestService;
 import com.socialmedia.connecto.services.FollowService;
 import com.socialmedia.connecto.services.UserService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.file.AccessDeniedException;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
@@ -62,6 +70,30 @@ public class BlockServiceImpl implements BlockService {
     public void unblock(Long id) {
         User currentUser = userService.getCurrentUser();
         blockRepository.deleteByBlockerIdAndBlockedId(currentUser.getId(), id);
+    }
+
+    @Override
+    public PagedDTO<BlockedUserDTO> getBlockedUsers(int page, int size) {
+        User user = userService.getCurrentUser();
+
+        Pageable pageable = PageRequest.of(page, size);
+
+        Page<Block> blockPage = blockRepository.findAllByBlockerOrderByCreatedAtDesc(user, pageable);
+
+        List<BlockedUserDTO> dtos = blockPage.getContent().stream().map(b -> {
+            BlockedUserDTO dto = new BlockedUserDTO();
+            dto.setId(b.getBlocked().getId());
+            dto.setName(b.getBlocked().getName());
+            dto.setBlockedAt(b.getCreatedAt());
+            return dto;
+        }).toList();
+
+        return new PagedDTO<BlockedUserDTO>(
+                dtos,
+                blockPage.getNumber(),
+                blockPage.getTotalPages(),
+                blockPage.getTotalElements()
+        );
     }
 
 }

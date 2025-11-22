@@ -143,12 +143,13 @@ public class BlockControllerTests {
         assertEquals(1, blockRepository.count());
     }
 
-    private void createAndSaveBlock() {
+    private Block createAndSaveBlock() {
         Block block = new Block();
         block.setBlocker(blocker);
         block.setBlocked(blocked);
-        blockRepository.save(block);
+        block = blockRepository.save(block);
         followRepository.deleteAll();
+        return block;
     }
 
     @Test
@@ -187,6 +188,60 @@ public class BlockControllerTests {
                 .andExpect(status().isNoContent());
 
         assertEquals(1, blockRepository.count());
+    }
+
+    @Test
+    @WithMockUser(username = "blocker@example.com")
+    void getBlockedUsers_ShouldReturnBlockedUsersPaginated_WhenTheyExist() throws Exception {
+        Block b1 = createAndSaveBlock();
+
+        User blocked2 = new User();
+        blocked2.setEmail("blocked2@example.com");
+        blocked2.setPassword(passwordEncoder.encode("password"));
+        blocked2.setName("blocked2");
+        blocked2.setRole(Role.USER);
+        blocked2.setGender(Gender.MALE);
+        blocked2.setPrivate(false);
+        blocked2.setBanned(false);
+        blocked2.setBirthDate(LocalDate.of(2000, 1, 1));
+        blocked2 = userRepository.save(blocked2);
+
+        try {
+            Thread.sleep(1000); // wait 1 second
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
+        Block b2 = new Block();
+        b2.setBlocker(blocker);
+        b2.setBlocked(blocked2);
+        b2 = blockRepository.save(b2);
+
+        mockMvc.perform(get("/api/blocks")
+                        .param("page", "0")
+                        .param("size", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.list.length()").value(2))
+                .andExpect(jsonPath("$.list[0].id").value(blocked2.getId()))
+                .andExpect(jsonPath("$.list[0].name").value(blocked2.getName()))
+                .andExpect(jsonPath("$.list[0].blockedAt").exists())
+                .andExpect(jsonPath("$.list[1].id").value(blocked.getId()))
+                .andExpect(jsonPath("$.list[1].name").value(blocked.getName()))
+                .andExpect(jsonPath("$.list[1].blockedAt").exists())
+                .andExpect(jsonPath("$.currentPage").value(0))
+                .andExpect(jsonPath("$.totalPages").value(1))
+                .andExpect(jsonPath("$.totalItems").value(2));
+    }
+
+    @Test
+    @WithMockUser(username = "blocker@example.com")
+    void getBlockedUsers_ShouldReturnEmpty_WhenNoBlockedUsers() throws Exception {
+        mockMvc.perform(get("/api/blocks")
+                        .param("page", "0")
+                        .param("size", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.list.length()").value(0))
+                .andExpect(jsonPath("$.totalItems").value(0));
     }
 
 }

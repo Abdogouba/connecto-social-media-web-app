@@ -1,6 +1,7 @@
 package com.socialmedia.connecto.controllers;
 
-import com.socialmedia.connecto.dtos.PagedNotificationDTO;
+import com.socialmedia.connecto.dtos.NotificationDTO;
+import com.socialmedia.connecto.dtos.PagedDTO;
 import com.socialmedia.connecto.services.NotificationService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,10 +17,10 @@ public class NotificationController {
     }
 
     @GetMapping
-    public ResponseEntity<PagedNotificationDTO> getMyNotifications(
+    public ResponseEntity<PagedDTO<NotificationDTO>> getMyNotifications(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        PagedNotificationDTO response = notificationService.getMyNotifications(page, size);
+        PagedDTO<NotificationDTO> response = notificationService.getMyNotifications(page, size);
         return ResponseEntity.ok(response);
     }
 

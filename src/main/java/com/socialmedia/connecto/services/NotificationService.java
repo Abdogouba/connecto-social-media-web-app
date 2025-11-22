@@ -1,11 +1,11 @@
 package com.socialmedia.connecto.services;
 
-import com.socialmedia.connecto.dtos.PagedNotificationDTO;
-import org.springframework.stereotype.Service;
+import com.socialmedia.connecto.dtos.NotificationDTO;
+import com.socialmedia.connecto.dtos.PagedDTO;
 
 public interface NotificationService {
 
-    PagedNotificationDTO getMyNotifications(int page, int size);
+    PagedDTO<NotificationDTO> getMyNotifications(int page, int size);
 
     long countUnreadNotifications();
 
