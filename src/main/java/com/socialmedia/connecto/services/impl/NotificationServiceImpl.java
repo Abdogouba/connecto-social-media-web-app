@@ -67,4 +67,10 @@ public class NotificationServiceImpl implements NotificationService {
         notificationRepository.markMyNotificationsAsRead(user);
     }
 
+    @Override
+    public void saveNotification(Notification notification) {
+        notification.setRead(false);
+        notificationRepository.save(notification);
+    }
+
 }

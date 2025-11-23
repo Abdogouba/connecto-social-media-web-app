@@ -8,5 +8,6 @@ public enum NotificationType {
     SHARED_POST,
     COMMENT,
     NEW_FOLLOWER,
+    FOLLOW_REQUEST,
     FOLLOW_ACCEPTED
 }

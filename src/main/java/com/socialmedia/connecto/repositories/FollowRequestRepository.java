@@ -10,4 +10,6 @@ public interface FollowRequestRepository extends JpaRepository<FollowRequest, Lo
 
     void deleteByFollowerAndFollowed(User follower, User followed);
 
+    boolean existsByFollowerAndFollowed(User follower, User followed);
+
 }
