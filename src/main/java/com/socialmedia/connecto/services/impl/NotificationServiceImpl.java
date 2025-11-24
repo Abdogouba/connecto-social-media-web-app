@@ -33,7 +33,7 @@ public class NotificationServiceImpl implements NotificationService {
         Pageable pageable = PageRequest.of(page, size);
 
         Page<Notification> notificationPage = notificationRepository
-                .findAllByReceiverOrderByCreatedAtDesc(user, pageable);
+                .findAllByReceiverIdOrderByCreatedAtDesc(user.getId(), pageable);
 
         List<NotificationDTO> dtos = notificationPage.getContent().stream().map(n -> {
             NotificationDTO dto = new NotificationDTO();
@@ -58,7 +58,7 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     public long countUnreadNotifications() {
         User user = userService.getCurrentUser();
-        return notificationRepository.countByReceiverAndIsReadFalse(user);
+        return notificationRepository.countByReceiverIdAndIsReadFalse(user.getId());
     }
 
     @Override

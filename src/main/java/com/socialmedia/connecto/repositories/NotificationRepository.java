@@ -11,16 +11,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-
 @Repository
 public interface NotificationRepository extends JpaRepository<Notification,Long> {
 
     // Get all notifications for a specific receiver, ordered by newest first
-    Page<Notification> findAllByReceiverOrderByCreatedAtDesc(User receiver, Pageable pageable);
+    Page<Notification> findAllByReceiverIdOrderByCreatedAtDesc(Long receiverId, Pageable pageable);
 
     // Count unread notifications of a user
-    long countByReceiverAndIsReadFalse(User receiver);
+    long countByReceiverIdAndIsReadFalse(Long receiverId);
 
     @Transactional
     @Modifying

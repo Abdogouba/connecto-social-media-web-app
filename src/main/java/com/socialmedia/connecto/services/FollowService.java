@@ -10,4 +10,6 @@ public interface FollowService {
 
     String follow(Long id) throws AccessDeniedException;
 
+    void unfollow(Long id);
+
 }

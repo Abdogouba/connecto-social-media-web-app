@@ -15,8 +15,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -276,7 +274,7 @@ public class NotificationControllerTests {
                 .andExpect(status().isOk())
                 .andExpect(content().string("Marked all notifications of user as read"));
 
-        long unreadCount = notificationRepository.countByReceiverAndIsReadFalse(this.receiver);
+        long unreadCount = notificationRepository.countByReceiverIdAndIsReadFalse(this.receiver.getId());
         assertEquals(0, unreadCount);
     }
 

@@ -189,7 +189,7 @@ public class FollowControllerTests {
         assertEquals(NotificationType.FOLLOW_REQUEST, notifications.getFirst().getType());
         assertFalse(notifications.getFirst().isRead());
         assertEquals(0, followRepository.count());
-        assertTrue(followRequestRepository.existsByFollowerAndFollowed(follower, followed));
+        assertTrue(followRequestRepository.existsByFollowerIdAndFollowedId(follower.getId(), followed.getId()));
     }
 
     @Test
@@ -209,6 +209,36 @@ public class FollowControllerTests {
         assertFalse(notifications.getFirst().isRead());
         assertEquals(0, followRequestRepository.count());
         assertTrue(followRepository.existsByFollowerIdAndFollowedId(follower.getId(), followed.getId()));
+    }
+
+    @Test
+    @WithMockUser(username = "follower@example.com")
+    public void unfollow_ShouldReturn400BadRequest_WhenUserUnfollowsHimself() throws Exception {
+        mockMvc.perform(delete("/api/follows/" + follower.getId())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("User cannot unfollow himself"));
+    }
+
+    @Test
+    @WithMockUser(username = "follower@example.com")
+    public void unfollow_ShouldReturn404NotFound_WhenTargetNotFound() throws Exception {
+        mockMvc.perform(delete("/api/follows/" + 11111)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(content().string("User to be unfollowed not found"));
+    }
+
+    @Test
+    @WithMockUser(username = "follower@example.com")
+    public void unfollow_ShouldReturn204NoContent_WhenTargetValid() throws Exception {
+        createAndSaveFollow();
+
+        mockMvc.perform(delete("/api/follows/" + followed.getId())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNoContent());
+
+        assertEquals(0, followRepository.count());
     }
 
     private FollowRequest createAndSaveFollowRequest() {

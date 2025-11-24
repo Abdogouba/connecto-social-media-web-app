@@ -1,10 +1,8 @@
 package com.socialmedia.connecto.services.impl;
 
 import com.socialmedia.connecto.dtos.BlockedUserDTO;
-import com.socialmedia.connecto.dtos.NotificationDTO;
 import com.socialmedia.connecto.dtos.PagedDTO;
 import com.socialmedia.connecto.models.Block;
-import com.socialmedia.connecto.models.Notification;
 import com.socialmedia.connecto.models.Role;
 import com.socialmedia.connecto.models.User;
 import com.socialmedia.connecto.repositories.BlockRepository;
@@ -12,14 +10,12 @@ import com.socialmedia.connecto.services.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.file.AccessDeniedException;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Optional;
 
 @Service
 public class BlockServiceImpl implements BlockService {
@@ -50,7 +46,7 @@ public class BlockServiceImpl implements BlockService {
         if (!target.getRole().equals(Role.USER))
             throw new AccessDeniedException("User cannot block admins");
 
-        if (blockRepository.existsByBlockerAndBlocked(currentUser, target))
+        if (blockRepository.existsByBlockerIdAndBlockedId(currentUser.getId(), target.getId()))
             throw new IllegalStateException("This user is already blocked");
 
         Block block = new Block();
@@ -75,7 +71,7 @@ public class BlockServiceImpl implements BlockService {
 
         Pageable pageable = PageRequest.of(page, size);
 
-        Page<Block> blockPage = blockRepository.findAllByBlockerOrderByCreatedAtDesc(user, pageable);
+        Page<Block> blockPage = blockRepository.findAllByBlockerIdOrderByCreatedAtDesc(user.getId(), pageable);
 
         List<BlockedUserDTO> dtos = blockPage.getContent().stream().map(b -> {
             BlockedUserDTO dto = new BlockedUserDTO();

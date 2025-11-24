@@ -8,8 +8,8 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface FollowRequestRepository extends JpaRepository<FollowRequest, Long> {
 
-    void deleteByFollowerAndFollowed(User follower, User followed);
+    void deleteByFollowerIdAndFollowedId(Long followerId, Long followedId);
 
-    boolean existsByFollowerAndFollowed(User follower, User followed);
+    boolean existsByFollowerIdAndFollowedId(Long followerId, Long followedId);
 
 }

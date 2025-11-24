@@ -2,10 +2,7 @@ package com.socialmedia.connecto.controllers;
 
 import com.socialmedia.connecto.services.FollowService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.nio.file.AccessDeniedException;
 
@@ -22,6 +19,12 @@ public class FollowController {
     @PostMapping("/{id}")
     public ResponseEntity<String> follow(@PathVariable Long id) throws AccessDeniedException {
         return ResponseEntity.ok(followService.follow(id));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity unfollow(@PathVariable Long id) {
+        followService.unfollow(id);
+        return ResponseEntity.noContent().build();
     }
 
 }

@@ -36,8 +36,8 @@ public class FollowServiceImpl implements FollowService {
     @Override
     @Transactional
     public void removeFollowRelationshipsIfExists(User current, User target) {
-        followRepository.deleteByFollowerAndFollowed(target, current);
-        followRepository.deleteByFollowerAndFollowed(current, target);
+        followRepository.deleteByFollowerIdAndFollowedId(target.getId(), current.getId());
+        followRepository.deleteByFollowerIdAndFollowedId(current.getId(), target.getId());
     }
 
     @Override
@@ -51,8 +51,8 @@ public class FollowServiceImpl implements FollowService {
         User target = userService.getUserById(id)
                 .orElseThrow(() -> new NoSuchElementException("User to be followed not found"));
 
-        boolean currentBlocksTarget = blockRepository.existsByBlockerAndBlocked(currentUser, target);
-        boolean targetBlocksCurrent = blockRepository.existsByBlockerAndBlocked(target, currentUser);
+        boolean currentBlocksTarget = blockRepository.existsByBlockerIdAndBlockedId(currentUser.getId(), target.getId());
+        boolean targetBlocksCurrent = blockRepository.existsByBlockerIdAndBlockedId(target.getId(), currentUser.getId());
 
         if (currentBlocksTarget)
             throw new IllegalStateException("User cannot follow a user he blocked");
@@ -85,6 +85,20 @@ public class FollowServiceImpl implements FollowService {
         notificationService.saveNotification(notification);
 
         return response;
+    }
+
+    @Override
+    @Transactional
+    public void unfollow(Long id) {
+        User currentUser = userService.getCurrentUser();
+
+        if (currentUser.getId().equals(id))
+            throw new IllegalArgumentException("User cannot unfollow himself");
+
+        User target = userService.getUserById(id)
+                .orElseThrow(() -> new NoSuchElementException("User to be unfollowed not found"));
+
+        followRepository.deleteByFollowerIdAndFollowedId(currentUser.getId(), id);
     }
 
     public void createAndSave(User currentUser, User target) {

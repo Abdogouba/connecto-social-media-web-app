@@ -160,7 +160,7 @@ public class BlockControllerTests {
                 .andExpect(status().isOk())
                 .andExpect(content().string("User blocked successfully"));
 
-        boolean blockExists = blockRepository.existsByBlockerAndBlocked(blocker, blocked);
+        boolean blockExists = blockRepository.existsByBlockerIdAndBlockedId(blocker.getId(), blocked.getId());
 
         assertTrue(blockExists);
         assertEquals(0, followRepository.count());
