@@ -98,7 +98,24 @@ public class FollowServiceImpl implements FollowService {
         User target = userService.getUserById(id)
                 .orElseThrow(() -> new NoSuchElementException("User to be unfollowed not found"));
 
-        followRepository.deleteByFollowerIdAndFollowedId(currentUser.getId(), id);
+        followRepository.deleteByFollowerIdAndFollowedId(currentUser.getId(), target.getId());
+    }
+
+    @Override
+    @Transactional
+    public void removeFollower(Long id) throws AccessDeniedException {
+        User currentUser = userService.getCurrentUser();
+
+        if (!currentUser.isPrivate())
+            throw new AccessDeniedException("Public users cannot remove a follower");
+
+        if (currentUser.getId().equals(id))
+            throw new IllegalArgumentException("User cannot remove himself from followers");
+
+        User target = userService.getUserById(id)
+                .orElseThrow(() -> new NoSuchElementException("User to be removed from followers not found"));
+
+        followRepository.deleteByFollowerIdAndFollowedId(target.getId(), currentUser.getId());
     }
 
     public void createAndSave(User currentUser, User target) {

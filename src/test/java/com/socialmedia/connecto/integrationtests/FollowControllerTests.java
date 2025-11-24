@@ -241,6 +241,68 @@ public class FollowControllerTests {
         assertEquals(0, followRepository.count());
     }
 
+    @Test
+    @WithMockUser(username = "followed@example.com")
+    public void removeFollower_ShouldReturn403Forbidden_WhenUserNotPrivate() throws Exception {
+        createAndSaveFollow();
+
+        mockMvc.perform(delete("/api/follows/followers/" + follower.getId())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden())
+                .andExpect(content().string("Public users cannot remove a follower"));
+
+        assertEquals(1, followRepository.count());
+    }
+
+    @Test
+    @WithMockUser(username = "followed@example.com")
+    public void removeFollower_ShouldReturn400BadRequest_WhenUserRemovesHimself() throws Exception {
+        followed.setPrivate(true);
+        followed = userRepository.save(followed);
+
+        mockMvc.perform(delete("/api/follows/followers/" + followed.getId())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("User cannot remove himself from followers"));
+    }
+
+    @Test
+    @WithMockUser(username = "followed@example.com")
+    public void removeFollower_ShouldReturn404NotFound_WhenTargetNotFound() throws Exception {
+        followed.setPrivate(true);
+        followed = userRepository.save(followed);
+
+        mockMvc.perform(delete("/api/follows/followers/" + 11111)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(content().string("User to be removed from followers not found"));
+    }
+
+    @Test
+    @WithMockUser(username = "followed@example.com")
+    public void removeFollower_ShouldReturn204NoContent_WhenTargetValid() throws Exception {
+        followed.setPrivate(true);
+        followed = userRepository.save(followed);
+        createAndSaveFollow();
+
+        mockMvc.perform(delete("/api/follows/followers/" + follower.getId())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNoContent());
+
+        assertEquals(0, followRepository.count());
+    }
+
+    @Test
+    @WithMockUser(username = "followed@example.com")
+    public void removeFollower_ShouldReturn204NoContent_WhenTargetValidButNotFollower() throws Exception {
+        followed.setPrivate(true);
+        followed = userRepository.save(followed);
+
+        mockMvc.perform(delete("/api/follows/followers/" + follower.getId())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNoContent());
+    }
+
     private FollowRequest createAndSaveFollowRequest() {
         FollowRequest followRequest = new FollowRequest();
         followRequest.setFollower(follower);

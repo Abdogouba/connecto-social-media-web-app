@@ -12,4 +12,6 @@ public interface FollowService {
 
     void unfollow(Long id);
 
+    void removeFollower(Long id) throws AccessDeniedException;
+
 }

@@ -27,4 +27,10 @@ public class FollowController {
         return ResponseEntity.noContent().build();
     }
 
+    @DeleteMapping("/followers/{id}")
+    public ResponseEntity removeFollower(@PathVariable Long id) throws AccessDeniedException {
+        followService.removeFollower(id);
+        return ResponseEntity.noContent().build();
+    }
+
 }
