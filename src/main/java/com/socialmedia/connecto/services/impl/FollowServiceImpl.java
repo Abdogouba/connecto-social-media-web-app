@@ -1,19 +1,23 @@
 package com.socialmedia.connecto.services.impl;
 
-import com.socialmedia.connecto.models.Follow;
-import com.socialmedia.connecto.models.Notification;
-import com.socialmedia.connecto.models.NotificationType;
-import com.socialmedia.connecto.models.User;
+import com.socialmedia.connecto.dtos.BlockedUserDTO;
+import com.socialmedia.connecto.dtos.FollowListUserDTO;
+import com.socialmedia.connecto.dtos.PagedDTO;
+import com.socialmedia.connecto.models.*;
 import com.socialmedia.connecto.repositories.BlockRepository;
 import com.socialmedia.connecto.repositories.FollowRepository;
 import com.socialmedia.connecto.services.FollowRequestService;
 import com.socialmedia.connecto.services.FollowService;
 import com.socialmedia.connecto.services.NotificationService;
 import com.socialmedia.connecto.services.UserService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.file.AccessDeniedException;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 @Service
@@ -116,6 +120,30 @@ public class FollowServiceImpl implements FollowService {
                 .orElseThrow(() -> new NoSuchElementException("User to be removed from followers not found"));
 
         followRepository.deleteByFollowerIdAndFollowedId(target.getId(), currentUser.getId());
+    }
+
+    @Override
+    public PagedDTO<FollowListUserDTO> getFollowing(int page, int size) {
+        User user = userService.getCurrentUser();
+
+        Pageable pageable = PageRequest.of(page, size);
+
+        Page<Follow> followPage = followRepository.findAllByFollowerIdOrderByCreatedAtDesc(user.getId(), pageable);
+
+        List<FollowListUserDTO> dtos = followPage.getContent().stream().map(f -> {
+            FollowListUserDTO dto = new FollowListUserDTO();
+            dto.setId(f.getFollowed().getId());
+            dto.setName(f.getFollowed().getName());
+            dto.setFollowedAt(f.getCreatedAt());
+            return dto;
+        }).toList();
+
+        return new PagedDTO<FollowListUserDTO>(
+                dtos,
+                followPage.getNumber(),
+                followPage.getTotalPages(),
+                followPage.getTotalElements()
+        );
     }
 
     public void createAndSave(User currentUser, User target) {
