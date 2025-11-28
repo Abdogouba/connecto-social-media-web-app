@@ -305,7 +305,54 @@ public class FollowControllerTests {
 
     @Test
     @WithMockUser(username = "follower@example.com")
-    void getFollowing_ShouldReturnFollowingUsersPaginated_WhenTheyExist() throws Exception {
+    void getFollowing_ShouldReturn404NotFound_WhenTargetDoesNotExist() throws Exception {
+        mockMvc.perform(get("/api/follows/" + 11111 + "/following")
+                        .param("page", "0")
+                        .param("size", "10"))
+                .andExpect(status().isNotFound())
+                .andExpect(content().string("User not found"));
+    }
+
+    @Test
+    @WithMockUser(username = "follower@example.com")
+    public void getFollowing_ShouldReturn403Forbidden_WhenUserIsBlockedByTarget() throws Exception {
+        createAndSaveBlock(followed, follower);
+
+        mockMvc.perform(get("/api/follows/" + followed.getId() +  "/following")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden())
+                .andExpect(content().string("User cannot view following list of a user that blocked him"));
+    }
+
+    @Test
+    @WithMockUser(username = "follower@example.com")
+    public void getFollowing_ShouldReturn409Conflict_WhenUserBlockedTarget() throws Exception {
+        createAndSaveBlock(follower, followed);
+
+        mockMvc.perform(get("/api/follows/" + followed.getId() +  "/following")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isConflict())
+                .andExpect(content().string("User cannot view following list of a user he blocked"));
+    }
+
+    @Test
+    @WithMockUser(username = "follower@example.com")
+    public void getFollowing_ShouldReturn403Forbidden_WhenTargetPrivateAndUserNotFollower() throws Exception {
+        followed.setPrivate(true);
+        followed = userRepository.save(followed);
+
+        mockMvc.perform(get("/api/follows/" + followed.getId() +  "/following")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden())
+                .andExpect(content().string("User cannot view following list of a private user he is not following"));
+    }
+
+    @Test
+    @WithMockUser(username = "follower@example.com")
+    void getFollowing_ShouldReturnFollowingUsersPaginated_WhenTargetIsCurrentUser() throws Exception {
+        follower.setPrivate(true);
+        follower = userRepository.save(follower);
+
         Follow follow1 = createAndSaveFollow();
 
         User followed2 = new User();
@@ -330,7 +377,7 @@ public class FollowControllerTests {
         follow2.setFollowed(followed2);
         follow2 = followRepository.save(follow2);
 
-        mockMvc.perform(get("/api/follows/following")
+        mockMvc.perform(get("/api/follows/" + follower.getId() + "/following")
                         .param("page", "0")
                         .param("size", "10"))
                 .andExpect(status().isOk())
@@ -348,8 +395,45 @@ public class FollowControllerTests {
 
     @Test
     @WithMockUser(username = "follower@example.com")
+    void getFollowing_ShouldReturnFollowingUsersPaginated_WhenTargetPrivateAndUserFollowsTarget() throws Exception {
+        followed.setPrivate(true);
+        followed = userRepository.save(followed);
+
+        createAndSaveFollow();
+
+        User followed2 = new User();
+        followed2.setEmail("followed2@example.com");
+        followed2.setPassword(passwordEncoder.encode("password"));
+        followed2.setName("followed2");
+        followed2.setRole(Role.USER);
+        followed2.setGender(Gender.MALE);
+        followed2.setPrivate(false);
+        followed2.setBanned(false);
+        followed2.setBirthDate(LocalDate.of(2000, 1, 1));
+        followed2 = userRepository.save(followed2);
+
+        Follow follow2 = new Follow();
+        follow2.setFollower(followed);
+        follow2.setFollowed(followed2);
+        follow2 = followRepository.save(follow2);
+
+        mockMvc.perform(get("/api/follows/" + followed.getId() + "/following")
+                        .param("page", "0")
+                        .param("size", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.list.length()").value(1))
+                .andExpect(jsonPath("$.list[0].id").value(followed2.getId()))
+                .andExpect(jsonPath("$.list[0].name").value(followed2.getName()))
+                .andExpect(jsonPath("$.list[0].followedAt").exists())
+                .andExpect(jsonPath("$.currentPage").value(0))
+                .andExpect(jsonPath("$.totalPages").value(1))
+                .andExpect(jsonPath("$.totalItems").value(1));
+    }
+
+    @Test
+    @WithMockUser(username = "follower@example.com")
     void getFollowing_ShouldReturnEmpty_WhenNoFollowingUsers() throws Exception {
-        mockMvc.perform(get("/api/follows/following")
+        mockMvc.perform(get("/api/follows/" + follower.getId() + "/following")
                         .param("page", "0")
                         .param("size", "10"))
                 .andExpect(status().isOk())
@@ -384,7 +468,7 @@ public class FollowControllerTests {
         follow2.setFollowed(followed2);
         follow2 = followRepository.save(follow2);
 
-        mockMvc.perform(get("/api/follows/following")
+        mockMvc.perform(get("/api/follows/" + follower.getId() + "/following")
                         .param("page", "3")
                         .param("size", "10"))
                 .andExpect(status().isOk())
@@ -421,7 +505,7 @@ public class FollowControllerTests {
         follow2.setFollowed(followed2);
         follow2 = followRepository.save(follow2);
 
-        mockMvc.perform(get("/api/follows/following")
+        mockMvc.perform(get("/api/follows/" + follower.getId() + "/following")
                         .param("page", "0")
                         .param("size", "100"))
                 .andExpect(status().isOk())

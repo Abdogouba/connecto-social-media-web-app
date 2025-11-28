@@ -18,4 +18,7 @@ public interface FollowRepository extends JpaRepository<Follow, Long> {
     // Get all followings for a specific user, ordered by newest first
     Page<Follow> findAllByFollowerIdOrderByCreatedAtDesc(Long followerId, Pageable pageable);
 
+    // Get all followers if a specific user, ordered by newest first
+    Page<Follow> findAllByFollowedIdOrderByCreatedAtDesc(Long followedId, Pageable pageable);
+
 }

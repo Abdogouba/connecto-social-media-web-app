@@ -36,11 +36,20 @@ public class FollowController {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/following")
+    @GetMapping("/{id}/following")
     public ResponseEntity<PagedDTO<FollowListUserDTO>> getFollowing(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) throws AccessDeniedException {
+        PagedDTO<FollowListUserDTO> response = followService.getFollowing(id, page, size);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/followers")
+    public ResponseEntity<PagedDTO<FollowListUserDTO>> getFollowers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        PagedDTO<FollowListUserDTO> response = followService.getFollowing(page, size);
+        PagedDTO<FollowListUserDTO> response = followService.getFollowers(page, size);
         return ResponseEntity.ok(response);
     }
 

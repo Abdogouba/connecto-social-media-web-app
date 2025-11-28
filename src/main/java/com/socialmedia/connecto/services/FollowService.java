@@ -16,6 +16,8 @@ public interface FollowService {
 
     void removeFollower(Long id) throws AccessDeniedException;
 
-    PagedDTO<FollowListUserDTO> getFollowing(int page, int size);
+    PagedDTO<FollowListUserDTO> getFollowing(Long id, int page, int size) throws AccessDeniedException;
+
+    PagedDTO<FollowListUserDTO> getFollowers(int page, int size);
 
 }
