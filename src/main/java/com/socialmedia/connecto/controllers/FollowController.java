@@ -45,11 +45,12 @@ public class FollowController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/followers")
+    @GetMapping("/{id}/followers")
     public ResponseEntity<PagedDTO<FollowListUserDTO>> getFollowers(
+            @PathVariable Long id,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        PagedDTO<FollowListUserDTO> response = followService.getFollowers(page, size);
+            @RequestParam(defaultValue = "10") int size) throws AccessDeniedException {
+        PagedDTO<FollowListUserDTO> response = followService.getFollowers(id, page, size);
         return ResponseEntity.ok(response);
     }
 

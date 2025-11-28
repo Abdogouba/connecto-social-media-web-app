@@ -162,12 +162,27 @@ public class FollowServiceImpl implements FollowService {
     }
 
     @Override
-    public PagedDTO<FollowListUserDTO> getFollowers(int page, int size) {
+    public PagedDTO<FollowListUserDTO> getFollowers(Long id, int page, int size) throws AccessDeniedException {
         User user = userService.getCurrentUser();
+
+        User target = userService.getUserById(id)
+                .orElseThrow(() -> new NoSuchElementException("User not found"));
+
+        boolean currentBlocksTarget = blockRepository.existsByBlockerIdAndBlockedId(user.getId(), target.getId());
+        boolean targetBlocksCurrent = blockRepository.existsByBlockerIdAndBlockedId(target.getId(), user.getId());
+
+        if (currentBlocksTarget)
+            throw new IllegalStateException("User cannot view followers list of a user he blocked");
+
+        if (targetBlocksCurrent)
+            throw new AccessDeniedException("User cannot view followers list of a user that blocked him");
+
+        if (!id.equals(user.getId()) && target.isPrivate() && !followRepository.existsByFollowerIdAndFollowedId(user.getId(), id))
+            throw new AccessDeniedException("User cannot view followers list of a private user he is not following");
 
         Pageable pageable = PageRequest.of(page, size);
 
-        Page<Follow> followPage = followRepository.findAllByFollowedIdOrderByCreatedAtDesc(user.getId(), pageable);
+        Page<Follow> followPage = followRepository.findAllByFollowedIdOrderByCreatedAtDesc(id, pageable);
 
         List<FollowListUserDTO> dtos = followPage.getContent().stream().map(f -> {
             FollowListUserDTO dto = new FollowListUserDTO();
