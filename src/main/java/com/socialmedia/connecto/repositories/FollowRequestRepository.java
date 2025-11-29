@@ -1,7 +1,10 @@
 package com.socialmedia.connecto.repositories;
 
+import com.socialmedia.connecto.models.Follow;
 import com.socialmedia.connecto.models.FollowRequest;
 import com.socialmedia.connecto.models.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -11,5 +14,8 @@ public interface FollowRequestRepository extends JpaRepository<FollowRequest, Lo
     void deleteByFollowerIdAndFollowedId(Long followerId, Long followedId);
 
     boolean existsByFollowerIdAndFollowedId(Long followerId, Long followedId);
+
+    // Get all follow requests of a specific user, ordered by newest first
+    Page<FollowRequest> findAllByFollowedIdOrderByCreatedAtDesc(Long followedId, Pageable pageable);
 
 }
