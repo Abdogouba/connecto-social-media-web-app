@@ -26,4 +26,12 @@ public class FollowRequestController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/sent")
+    public ResponseEntity<PagedDTO<FollowListUserDTO>> getFollowRequestsSent(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        PagedDTO<FollowListUserDTO> response = followRequestService.getFollowRequestsSent(page, size);
+        return ResponseEntity.ok(response);
+    }
+
 }

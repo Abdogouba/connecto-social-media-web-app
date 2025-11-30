@@ -187,6 +187,106 @@ public class FollowRequestControllerTests {
                 .andExpect(jsonPath("$.totalItems").value(2));
     }
 
+    @Test
+    @WithMockUser(username = "follower@example.com")
+    void getFollowRequestsSent_ShouldReturnRequestsPaginated_WhenUserSentRequests() throws Exception {
+        followed.setPrivate(true);
+        followed = userRepository.save(followed);
+
+        createAndSaveFollowRequest();
+
+        User followed2 = new User();
+        followed2.setEmail("followed2@example.com");
+        followed2.setPassword(passwordEncoder.encode("password"));
+        followed2.setName("followed2");
+        followed2.setRole(Role.USER);
+        followed2.setGender(Gender.MALE);
+        followed2.setPrivate(true);
+        followed2.setBanned(false);
+        followed2.setBirthDate(LocalDate.of(2000, 1, 1));
+        followed2 = userRepository.save(followed2);
+
+        try {
+            Thread.sleep(1000); // wait 1 second
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
+        FollowRequest request2 = new FollowRequest();
+        request2.setFollower(follower);
+        request2.setFollowed(followed2);
+        followRequestRepository.save(request2);
+
+        mockMvc.perform(get("/api/follow-requests/sent")
+                        .param("page", "0")
+                        .param("size", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.list.length()").value(2))
+                .andExpect(jsonPath("$.list[0].id").value(followed2.getId()))
+                .andExpect(jsonPath("$.list[0].name").value(followed2.getName()))
+                .andExpect(jsonPath("$.list[0].followedAt").exists())
+                .andExpect(jsonPath("$.list[1].id").value(followed.getId()))
+                .andExpect(jsonPath("$.list[1].name").value(followed.getName()))
+                .andExpect(jsonPath("$.list[1].followedAt").exists())
+                .andExpect(jsonPath("$.currentPage").value(0))
+                .andExpect(jsonPath("$.totalPages").value(1))
+                .andExpect(jsonPath("$.totalItems").value(2));
+    }
+
+    @Test
+    @WithMockUser(username = "follower@example.com")
+    void getFollowRequestsSent_ShouldReturnEmptyList_WhenUserHasNoRequests() throws Exception {
+        mockMvc.perform(get("/api/follow-requests/sent")
+                        .param("page", "0")
+                        .param("size", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.list.length()").value(0))
+                .andExpect(jsonPath("$.totalItems").value(0));
+    }
+
+    @Test
+    @WithMockUser(username = "follower@example.com")
+    void getFollowRequestsSent_ShouldReturnRequestsPaginated_WhenUserSentRequestsAnd2ndPage() throws Exception {
+        followed.setPrivate(true);
+        followed = userRepository.save(followed);
+
+        createAndSaveFollowRequest();
+
+        User followed2 = new User();
+        followed2.setEmail("followed2@example.com");
+        followed2.setPassword(passwordEncoder.encode("password"));
+        followed2.setName("followed2");
+        followed2.setRole(Role.USER);
+        followed2.setGender(Gender.MALE);
+        followed2.setPrivate(true);
+        followed2.setBanned(false);
+        followed2.setBirthDate(LocalDate.of(2000, 1, 1));
+        followed2 = userRepository.save(followed2);
+
+        try {
+            Thread.sleep(1000); // wait 1 second
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
+        FollowRequest request2 = new FollowRequest();
+        request2.setFollower(follower);
+        request2.setFollowed(followed2);
+        followRequestRepository.save(request2);
+
+        mockMvc.perform(get("/api/follow-requests/sent")
+                        .param("page", "1")
+                        .param("size", "1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.list.length()").value(1))
+                .andExpect(jsonPath("$.list[0].id").value(followed.getId()))
+                .andExpect(jsonPath("$.list[0].name").value(followed.getName()))
+                .andExpect(jsonPath("$.list[0].followedAt").exists())
+                .andExpect(jsonPath("$.currentPage").value(1))
+                .andExpect(jsonPath("$.totalPages").value(2))
+                .andExpect(jsonPath("$.totalItems").value(2));
+    }
+
     private FollowRequest createAndSaveFollowRequest() {
         FollowRequest followRequest = new FollowRequest();
         followRequest.setFollower(follower);

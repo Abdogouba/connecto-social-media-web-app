@@ -75,4 +75,29 @@ public class FollowRequestServiceImpl implements FollowRequestService {
                 followRequestPage.getTotalElements()
         );
     }
+
+    @Override
+    public PagedDTO<FollowListUserDTO> getFollowRequestsSent(int page, int size) {
+        User user = userService.getCurrentUser();
+
+        Pageable pageable = PageRequest.of(page, size);
+
+        Page<FollowRequest> followRequestPage = followRequestRepository.findAllByFollowerIdOrderByCreatedAtDesc(user.getId(), pageable);
+
+        List<FollowListUserDTO> dtos = followRequestPage.getContent().stream().map(f -> {
+            FollowListUserDTO dto = new FollowListUserDTO();
+            dto.setId(f.getFollowed().getId());
+            dto.setName(f.getFollowed().getName());
+            dto.setFollowedAt(f.getCreatedAt());
+            return dto;
+        }).toList();
+
+        return new PagedDTO<FollowListUserDTO>(
+                dtos,
+                followRequestPage.getNumber(),
+                followRequestPage.getTotalPages(),
+                followRequestPage.getTotalElements()
+        );
+    }
+
 }

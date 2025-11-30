@@ -15,7 +15,10 @@ public interface FollowRequestRepository extends JpaRepository<FollowRequest, Lo
 
     boolean existsByFollowerIdAndFollowedId(Long followerId, Long followedId);
 
-    // Get all follow requests of a specific user, ordered by newest first
+    // Get all follow requests received, ordered by newest first
     Page<FollowRequest> findAllByFollowedIdOrderByCreatedAtDesc(Long followedId, Pageable pageable);
+
+    // Get all follow requests sent, ordered by newest first
+    Page<FollowRequest> findAllByFollowerIdOrderByCreatedAtDesc(Long followerId, Pageable pageable);
 
 }
