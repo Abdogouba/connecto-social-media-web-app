@@ -34,4 +34,10 @@ public class FollowRequestController {
         return ResponseEntity.ok(response);
     }
 
+    @DeleteMapping("/sent/{id}")
+    public ResponseEntity cancelFollowRequestSent(@PathVariable Long id) {
+        followRequestService.cancelFollowRequestSent(id);
+        return ResponseEntity.noContent().build();
+    }
+
 }

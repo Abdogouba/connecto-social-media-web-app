@@ -15,4 +15,7 @@ public interface FollowRequestService {
     PagedDTO<FollowListUserDTO> getFollowRequestsReceived(int page, int size);
 
     PagedDTO<FollowListUserDTO> getFollowRequestsSent(int page, int size);
+
+    void cancelFollowRequestSent(Long followedId);
+
 }

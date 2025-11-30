@@ -100,4 +100,15 @@ public class FollowRequestServiceImpl implements FollowRequestService {
         );
     }
 
+    @Override
+    @Transactional
+    public void cancelFollowRequestSent(Long followedId) {
+        User currentUser = userService.getCurrentUser();
+
+        if (followedId.equals(currentUser.getId()))
+            throw new IllegalArgumentException("Target id cannot be equal to current user id");
+
+        followRequestRepository.deleteByFollowerIdAndFollowedId(currentUser.getId(), followedId);
+    }
+
 }

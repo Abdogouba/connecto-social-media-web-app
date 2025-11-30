@@ -287,6 +287,42 @@ public class FollowRequestControllerTests {
                 .andExpect(jsonPath("$.totalItems").value(2));
     }
 
+    @Test
+    @WithMockUser(username = "follower@example.com")
+    void cancelFollowRequestSent_ShouldReturn400BadRequest_WhenTargetIsCurrentUser() throws Exception {
+        followed.setPrivate(true);
+        followed = userRepository.save(followed);
+
+        createAndSaveFollowRequest();
+
+        mockMvc.perform(delete("/api/follow-requests/sent/" + follower.getId()))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("Target id cannot be equal to current user id"));
+
+        assertEquals(1, followRequestRepository.count());
+    }
+
+    @Test
+    @WithMockUser(username = "follower@example.com")
+    void cancelFollowRequestSent_ShouldReturn204NoContent_WhenRequestNotFound() throws Exception {
+        mockMvc.perform(delete("/api/follow-requests/sent/" + followed.getId()))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @WithMockUser(username = "follower@example.com")
+    void cancelFollowRequestSent_ShouldDeleteRequestAndReturn204NoContent_WhenRequestExists() throws Exception {
+        followed.setPrivate(true);
+        followed = userRepository.save(followed);
+
+        createAndSaveFollowRequest();
+
+        mockMvc.perform(delete("/api/follow-requests/sent/" + followed.getId()))
+                .andExpect(status().isNoContent());
+
+        assertEquals(0, followRequestRepository.count());
+    }
+
     private FollowRequest createAndSaveFollowRequest() {
         FollowRequest followRequest = new FollowRequest();
         followRequest.setFollower(follower);
