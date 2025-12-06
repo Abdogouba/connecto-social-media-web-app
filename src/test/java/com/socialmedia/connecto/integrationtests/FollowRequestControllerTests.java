@@ -2,6 +2,7 @@ package com.socialmedia.connecto.integrationtests;
 
 import com.socialmedia.connecto.models.*;
 import com.socialmedia.connecto.repositories.*;
+import com.socialmedia.connecto.services.FollowRequestService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +39,9 @@ public class FollowRequestControllerTests {
     private FollowRequestRepository  followRequestRepository;
 
     @Autowired
+    private FollowRepository followRepository;
+
+    @Autowired
     private NotificationRepository notificationRepository;
 
     private User follower;
@@ -47,6 +51,7 @@ public class FollowRequestControllerTests {
     void setUp() {
         notificationRepository.deleteAll();
         followRequestRepository.deleteAll();
+        followRepository.deleteAll();
         userRepository.deleteAll();
 
         // Create follower
@@ -323,11 +328,219 @@ public class FollowRequestControllerTests {
         assertEquals(0, followRequestRepository.count());
     }
 
+    @Test
+    @WithMockUser(username = "followed@example.com")
+    void respondToFollowRequest_ShouldReturn400BadRequest_WhenActionInvalid() throws Exception {
+        followed.setPrivate(true);
+        followed = userRepository.save(followed);
+
+        createAndSaveFollowRequest();
+
+        String requestBody = """
+            {
+                "action": "ok"
+            }
+        """;
+
+        mockMvc.perform(post("/api/follow-requests/" + follower.getId() + "/respond")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestBody))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("Malformed JSON or invalid data format"));
+
+        assertEquals(1, followRequestRepository.count());
+        assertEquals(0, followRepository.count());
+        assertEquals(0, notificationRepository.count());
+    }
+
+    @Test
+    @WithMockUser(username = "followed@example.com")
+    void respondToFollowRequest_ShouldReturn409Conflict_WhenUserIsPublic() throws Exception {
+        String requestBody = """
+            {
+                "action": "ACCEPT"
+            }
+        """;
+
+        mockMvc.perform(post("/api/follow-requests/" + follower.getId() + "/respond")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isConflict())
+                .andExpect(content().string("Public users do not have follow requests"));
+
+        assertEquals(0, followRequestRepository.count());
+        assertEquals(0, followRepository.count());
+        assertEquals(0, notificationRepository.count());
+    }
+
+    @Test
+    @WithMockUser(username = "followed@example.com")
+    void respondToFollowRequest_ShouldReturn400BadRequest_WhenIdEqualsCurrentUserId() throws Exception {
+        followed.setPrivate(true);
+        followed = userRepository.save(followed);
+
+        createAndSaveFollowRequest();
+
+        String requestBody = """
+            {
+                "action": "ACCEPT"
+            }
+        """;
+
+        mockMvc.perform(post("/api/follow-requests/" + followed.getId() + "/respond")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("Target id is invalid"));
+
+        assertEquals(1, followRequestRepository.count());
+        assertEquals(0, followRepository.count());
+        assertEquals(0, notificationRepository.count());
+    }
+
+    @Test
+    @WithMockUser(username = "followed@example.com")
+    void respondToFollowRequest_ShouldReturn404NotFound_WhenTargetUserDoesNotExist() throws Exception {
+        followed.setPrivate(true);
+        followed = userRepository.save(followed);
+
+        createAndSaveFollowRequest();
+
+        String requestBody = """
+            {
+                "action": "ACCEPT"
+            }
+        """;
+
+        mockMvc.perform(post("/api/follow-requests/" + 11111 + "/respond")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isNotFound())
+                .andExpect(content().string("Follow request sender not found"));
+
+        assertEquals(1, followRequestRepository.count());
+        assertEquals(0, followRepository.count());
+        assertEquals(0, notificationRepository.count());
+    }
+
+    @Test
+    @WithMockUser(username = "followed@example.com")
+    void respondToFollowRequest_ShouldReturn404NotFound_WhenFollowRequestDoesNotExist() throws Exception {
+        followed.setPrivate(true);
+        followed = userRepository.save(followed);
+
+        String requestBody = """
+            {
+                "action": "ACCEPT"
+            }
+        """;
+
+        mockMvc.perform(post("/api/follow-requests/" + follower.getId() + "/respond")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isNotFound())
+                .andExpect(content().string("Follow request not found"));
+
+        assertEquals(0, followRequestRepository.count());
+        assertEquals(0, followRepository.count());
+        assertEquals(0, notificationRepository.count());
+    }
+
+    @Test
+    @WithMockUser(username = "followed@example.com")
+    void respondToFollowRequest_ShouldReturn200Ok_WhenFollowAlreadyExists() throws Exception {
+        followed.setPrivate(true);
+        followed = userRepository.save(followed);
+
+        createAndSaveFollowRequest();
+
+        createAndSaveFollow();
+
+        String requestBody = """
+            {
+                "action": "ACCEPT"
+            }
+        """;
+
+        mockMvc.perform(post("/api/follow-requests/" + follower.getId() + "/respond")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Target user already follows current user"));
+
+        assertEquals(0, followRequestRepository.count());
+        assertEquals(1, followRepository.count());
+        assertEquals(0, notificationRepository.count());
+    }
+
+    @Test
+    @WithMockUser(username = "followed@example.com")
+    void respondToFollowRequest_ShouldReturn200Ok_WhenWantsToDeleteRequest() throws Exception {
+        followed.setPrivate(true);
+        followed = userRepository.save(followed);
+
+        createAndSaveFollowRequest();
+
+        String requestBody = """
+            {
+                "action": "REJECT"
+            }
+        """;
+
+        mockMvc.perform(post("/api/follow-requests/" + follower.getId() + "/respond")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Follow request rejected"));
+
+        assertEquals(0, followRequestRepository.count());
+        assertEquals(0, followRepository.count());
+        assertEquals(0, notificationRepository.count());
+    }
+
+    @Test
+    @WithMockUser(username = "followed@example.com")
+    void respondToFollowRequest_ShouldReturn200Ok_WhenWantsToAcceptRequest() throws Exception {
+        followed.setPrivate(true);
+        followed = userRepository.save(followed);
+
+        createAndSaveFollowRequest();
+
+        String requestBody = """
+            {
+                "action": "ACCEPT"
+            }
+        """;
+
+        mockMvc.perform(post("/api/follow-requests/" + follower.getId() + "/respond")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Follow request accepted"));
+
+        List<Notification> notifications = notificationRepository.findAll();
+        assertEquals(1, notifications.size());
+        Notification notification = notifications.getFirst();
+        assertEquals(follower.getId(), notification.getReceiver().getId());
+        assertEquals(followed.getId(), notification.getSender().getId());
+        assertEquals(NotificationType.FOLLOW_ACCEPTED, notification.getType());
+        assertFalse(notification.isRead());
+        assertTrue(followRepository.existsByFollowerIdAndFollowedId(follower.getId(), followed.getId()));
+        assertEquals(0, followRequestRepository.count());
+    }
+
     private FollowRequest createAndSaveFollowRequest() {
         FollowRequest followRequest = new FollowRequest();
         followRequest.setFollower(follower);
         followRequest.setFollowed(followed);
         return followRequestRepository.save(followRequest);
+    }
+
+    private Follow createAndSaveFollow() {
+        Follow follow = new Follow();
+        follow.setFollower(follower);
+        follow.setFollowed(followed);
+        return followRepository.save(follow);
     }
 
 }

@@ -1,8 +1,11 @@
 package com.socialmedia.connecto.controllers;
 
 import com.socialmedia.connecto.dtos.FollowListUserDTO;
+import com.socialmedia.connecto.dtos.FollowRequestAction;
+import com.socialmedia.connecto.dtos.FollowRequestResponseDTO;
 import com.socialmedia.connecto.dtos.PagedDTO;
 import com.socialmedia.connecto.services.FollowRequestService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -38,6 +41,12 @@ public class FollowRequestController {
     public ResponseEntity cancelFollowRequestSent(@PathVariable Long id) {
         followRequestService.cancelFollowRequestSent(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{id}/respond")
+    public ResponseEntity<String> respondToFollowRequest(@PathVariable Long id, @Valid @RequestBody FollowRequestResponseDTO dto) {
+        String response = followRequestService.respondToFollowRequest(id, dto);
+        return ResponseEntity.ok(response);
     }
 
 }

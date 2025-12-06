@@ -1,12 +1,14 @@
 package com.socialmedia.connecto.services.impl;
 
 import com.socialmedia.connecto.dtos.FollowListUserDTO;
+import com.socialmedia.connecto.dtos.FollowRequestAction;
+import com.socialmedia.connecto.dtos.FollowRequestResponseDTO;
 import com.socialmedia.connecto.dtos.PagedDTO;
-import com.socialmedia.connecto.models.Follow;
-import com.socialmedia.connecto.models.FollowRequest;
-import com.socialmedia.connecto.models.User;
+import com.socialmedia.connecto.models.*;
+import com.socialmedia.connecto.repositories.FollowRepository;
 import com.socialmedia.connecto.repositories.FollowRequestRepository;
 import com.socialmedia.connecto.services.FollowRequestService;
+import com.socialmedia.connecto.services.NotificationService;
 import com.socialmedia.connecto.services.UserService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -14,7 +16,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.nio.file.AccessDeniedException;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -23,10 +24,14 @@ public class FollowRequestServiceImpl implements FollowRequestService {
 
     private final FollowRequestRepository followRequestRepository;
     private final UserService userService;
+    private final FollowRepository followRepository;
+    private final NotificationService notificationService;
 
-    public FollowRequestServiceImpl(FollowRequestRepository followRequestRepository, UserService userService) {
+    public FollowRequestServiceImpl(FollowRequestRepository followRequestRepository, UserService userService, FollowRepository followRepository, NotificationService notificationService) {
         this.followRequestRepository = followRequestRepository;
         this.userService = userService;
+        this.followRepository = followRepository;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -109,6 +114,52 @@ public class FollowRequestServiceImpl implements FollowRequestService {
             throw new IllegalArgumentException("Target id cannot be equal to current user id");
 
         followRequestRepository.deleteByFollowerIdAndFollowedId(currentUser.getId(), followedId);
+    }
+
+    @Override
+    @Transactional
+    public String respondToFollowRequest(Long followerId, FollowRequestResponseDTO dto) {
+        User currentUser = userService.getCurrentUser();
+
+        FollowRequestAction action = dto.getAction();
+
+        if (!currentUser.isPrivate())
+            throw new IllegalStateException("Public users do not have follow requests");
+
+        if (followerId.equals(currentUser.getId()))
+            throw new IllegalArgumentException("Target id is invalid");
+
+        User follower = userService.getUserById(followerId)
+                .orElseThrow(() -> new NoSuchElementException("Follow request sender not found"));
+
+        if (!followRequestRepository.existsByFollowerIdAndFollowedId(followerId, currentUser.getId()))
+            throw new NoSuchElementException("Follow request not found");
+
+        followRequestRepository.deleteByFollowerIdAndFollowedId(followerId, currentUser.getId());
+
+        String response = "";
+
+        if (action == FollowRequestAction.ACCEPT) {
+            response = "Follow request accepted";
+
+            if (followRepository.existsByFollowerIdAndFollowedId(followerId, currentUser.getId()))
+                return "Target user already follows current user";
+
+            Follow follow = new Follow();
+            follow.setFollower(follower);
+            follow.setFollowed(currentUser);
+            followRepository.save(follow);
+
+            Notification notification = new Notification();
+            notification.setReceiver(follower);
+            notification.setSender(currentUser);
+            notification.setType(NotificationType.FOLLOW_ACCEPTED);
+            notificationService.saveNotification(notification);
+        } else {
+            response = "Follow request rejected";
+        }
+
+        return response;
     }
 
 }

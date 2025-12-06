@@ -1,6 +1,8 @@
 package com.socialmedia.connecto.services;
 
 import com.socialmedia.connecto.dtos.FollowListUserDTO;
+import com.socialmedia.connecto.dtos.FollowRequestAction;
+import com.socialmedia.connecto.dtos.FollowRequestResponseDTO;
 import com.socialmedia.connecto.dtos.PagedDTO;
 import com.socialmedia.connecto.models.User;
 
@@ -17,5 +19,7 @@ public interface FollowRequestService {
     PagedDTO<FollowListUserDTO> getFollowRequestsSent(int page, int size);
 
     void cancelFollowRequestSent(Long followedId);
+
+    String respondToFollowRequest(Long followerId, FollowRequestResponseDTO dto);
 
 }

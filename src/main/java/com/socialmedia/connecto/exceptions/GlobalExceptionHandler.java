@@ -1,7 +1,9 @@
 package com.socialmedia.connecto.exceptions;
 
+import org.springframework.aop.AopInvocationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -34,12 +36,22 @@ public class GlobalExceptionHandler {
     // --------------------- SERVICE LAYER EXCEPTIONS ---------------------
 
     // 400 – Bad request (invalid input)
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<String> handleHttpMessageNotReadable(HttpMessageNotReadableException ex) {
+        return ResponseEntity
+                .badRequest()
+                .body("Malformed JSON or invalid data format");
+    }
+
+
+    // 400 – Bad request (invalid input)
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<String> handleIllegalArgument(IllegalArgumentException ex) {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(ex.getMessage());
     }
+
 
     // 404 – Not found
     @ExceptionHandler(NoSuchElementException.class)

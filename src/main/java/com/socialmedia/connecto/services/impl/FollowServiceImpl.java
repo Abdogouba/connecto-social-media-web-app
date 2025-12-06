@@ -1,6 +1,5 @@
 package com.socialmedia.connecto.services.impl;
 
-import com.socialmedia.connecto.dtos.BlockedUserDTO;
 import com.socialmedia.connecto.dtos.FollowListUserDTO;
 import com.socialmedia.connecto.dtos.PagedDTO;
 import com.socialmedia.connecto.models.*;
@@ -206,6 +205,5 @@ public class FollowServiceImpl implements FollowService {
         follow.setFollowed(target);
         followRepository.save(follow);
     }
-
 
 }
