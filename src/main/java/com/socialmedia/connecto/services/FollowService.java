@@ -1,6 +1,7 @@
 package com.socialmedia.connecto.services;
 
 import com.socialmedia.connecto.dtos.FollowListUserDTO;
+import com.socialmedia.connecto.dtos.FollowSuggestionUserDTO;
 import com.socialmedia.connecto.dtos.PagedDTO;
 import com.socialmedia.connecto.models.User;
 
@@ -20,4 +21,5 @@ public interface FollowService {
 
     PagedDTO<FollowListUserDTO> getFollowers(Long id, int page, int size) throws AccessDeniedException;
 
+    PagedDTO<FollowSuggestionUserDTO> getFollowSuggestions(int page, int size);
 }

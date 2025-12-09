@@ -1,6 +1,7 @@
 package com.socialmedia.connecto.services.impl;
 
 import com.socialmedia.connecto.dtos.FollowListUserDTO;
+import com.socialmedia.connecto.dtos.FollowSuggestionUserDTO;
 import com.socialmedia.connecto.dtos.PagedDTO;
 import com.socialmedia.connecto.models.*;
 import com.socialmedia.connecto.repositories.BlockRepository;
@@ -196,6 +197,30 @@ public class FollowServiceImpl implements FollowService {
                 followPage.getNumber(),
                 followPage.getTotalPages(),
                 followPage.getTotalElements()
+        );
+    }
+
+    @Override
+    public PagedDTO<FollowSuggestionUserDTO> getFollowSuggestions(int page, int size) {
+        User user = userService.getCurrentUser();
+
+        Pageable pageable = PageRequest.of(page, size);
+
+        Page<User> userPage = followRepository.findSuggestedUsersToFollow(user.getId(), pageable);
+
+        List<FollowSuggestionUserDTO> dtos = userPage.getContent().stream().map(u -> {
+            FollowSuggestionUserDTO dto = new FollowSuggestionUserDTO();
+            dto.setId(u.getId());
+            dto.setName(u.getName());
+            dto.setPrivate(u.isPrivate());
+            return dto;
+        }).toList();
+
+        return new PagedDTO<FollowSuggestionUserDTO>(
+                dtos,
+                userPage.getNumber(),
+                userPage.getTotalPages(),
+                userPage.getTotalElements()
         );
     }
 

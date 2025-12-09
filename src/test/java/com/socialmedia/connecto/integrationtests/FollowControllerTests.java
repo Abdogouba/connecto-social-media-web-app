@@ -671,6 +671,101 @@ public class FollowControllerTests {
                 .andExpect(jsonPath("$.totalItems").value(0));
     }
 
+    @Test
+    @WithMockUser(username = "follower@example.com")
+    void getFollowSuggestions_ShouldReturnEmptyList_WhenNotFollowingAnyone() throws Exception {
+        mockMvc.perform(get("/api/follows/suggestions")
+                        .param("page", "0")
+                        .param("size", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.list.length()").value(0))
+                .andExpect(jsonPath("$.totalItems").value(0));
+    }
+
+    @Test
+    @WithMockUser(username = "follower@example.com")
+    void getFollowSuggestions_ShouldReturnPaginatedList_WhenSuggestionsExist() throws Exception {
+        // current user follows 2 users
+        createAndSaveFollow();
+        User user1 = createAndSaveUser();
+        createAndSaveFollow(follower, user1);
+
+        // users who are followed by current user follow 2 users that will be in result list
+        User user2 = createAndSaveUser();
+        createAndSaveFollow(followed, user2);
+        User user3 = createAndSaveUser();
+        createAndSaveFollow(user1, user3);
+
+        // duplicate suggestion
+        createAndSaveFollow(user1, user2);
+
+        // suggestion that current user follows
+        createAndSaveFollow(user1, followed);
+
+        // current user suggestion
+        createAndSaveFollow(user1, follower);
+
+        // suggestion that current user sent a follow request
+        User user4 = createAndSaveUser();
+        user4.setPrivate(true);
+        user4 = userRepository.save(user4);
+        createAndSaveFollowRequest(follower, user4);
+        createAndSaveFollow(followed, user4);
+
+        // suggestion that the current user blocked
+        User user5 = createAndSaveUser();
+        createAndSaveBlock(follower, user5);
+        createAndSaveFollow(followed, user5);
+
+        // suggestion that blocked the current user
+        User user6 = createAndSaveUser();
+        createAndSaveBlock(user6, follower);
+        createAndSaveFollow(followed, user6);
+
+        mockMvc.perform(get("/api/follows/suggestions")
+                        .param("page", "0")
+                        .param("size", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.list.length()").value(2))
+                .andExpect(jsonPath("$.list[0].id").value(user2.getId()))
+                .andExpect(jsonPath("$.list[0].name").value(user2.getName()))
+                .andExpect(jsonPath("$.list[0].private").value(false))
+                .andExpect(jsonPath("$.list[1].id").value(user3.getId()))
+                .andExpect(jsonPath("$.list[1].name").value(user3.getName()))
+                .andExpect(jsonPath("$.list[1].private").value(false))
+                .andExpect(jsonPath("$.currentPage").value(0))
+                .andExpect(jsonPath("$.totalPages").value(1))
+                .andExpect(jsonPath("$.totalItems").value(2));
+    }
+
+    private FollowRequest createAndSaveFollowRequest(User user1, User user2) {
+        FollowRequest followRequest = new FollowRequest();
+        followRequest.setFollower(user1);
+        followRequest.setFollowed(user2);
+        return followRequestRepository.save(followRequest);
+    }
+
+    private Follow createAndSaveFollow(User user1, User user2) {
+        Follow follow = new Follow();
+        follow.setFollower(user1);
+        follow.setFollowed(user2);
+        return followRepository.save(follow);
+    }
+
+    private User createAndSaveUser() {
+        long count = userRepository.count();
+        User user = new User();
+        user.setEmail("user" + count + "@example.com");
+        user.setPassword(passwordEncoder.encode("password"));
+        user.setName("user" + count);
+        user.setRole(Role.USER);
+        user.setGender(Gender.MALE);
+        user.setPrivate(false);
+        user.setBanned(false);
+        user.setBirthDate(LocalDate.of(2000, 1, 1));
+        return userRepository.save(user);
+    }
+
     private FollowRequest createAndSaveFollowRequest() {
         FollowRequest followRequest = new FollowRequest();
         followRequest.setFollower(follower);

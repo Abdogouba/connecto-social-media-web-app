@@ -2,6 +2,7 @@ package com.socialmedia.connecto.controllers;
 
 import com.socialmedia.connecto.dtos.BlockedUserDTO;
 import com.socialmedia.connecto.dtos.FollowListUserDTO;
+import com.socialmedia.connecto.dtos.FollowSuggestionUserDTO;
 import com.socialmedia.connecto.dtos.PagedDTO;
 import com.socialmedia.connecto.services.FollowService;
 import org.springframework.http.ResponseEntity;
@@ -51,6 +52,14 @@ public class FollowController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) throws AccessDeniedException {
         PagedDTO<FollowListUserDTO> response = followService.getFollowers(id, page, size);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/suggestions")
+    public ResponseEntity<PagedDTO<FollowSuggestionUserDTO>> getFollowSuggestions(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        PagedDTO<FollowSuggestionUserDTO> response = followService.getFollowSuggestions(page, size);
         return ResponseEntity.ok(response);
     }
 
