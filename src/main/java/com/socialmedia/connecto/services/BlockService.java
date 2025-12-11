@@ -11,4 +11,6 @@ public interface BlockService {
 
     PagedDTO<BlockedUserDTO> getBlockedUsers(int page, int size);
 
+    boolean isBlocked(Long blockerId, Long blockedId);
+
 }

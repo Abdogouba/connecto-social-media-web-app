@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.nio.file.AccessDeniedException;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 
 @Service
 public class PostServiceImpl implements PostService {
@@ -62,6 +63,10 @@ public class PostServiceImpl implements PostService {
         responseDTO.setUserName(savedPost.getUser().getName());
         responseDTO.setCreatedAt(savedPost.getCreatedAt());
         return responseDTO;
+    }
+
+    public Optional<Post> getPostById(Long postId) {
+        return postRepository.findById(postId);
     }
 
 }

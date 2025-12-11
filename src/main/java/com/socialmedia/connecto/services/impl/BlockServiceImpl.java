@@ -89,4 +89,9 @@ public class BlockServiceImpl implements BlockService {
         );
     }
 
+    @Override
+    public boolean isBlocked(Long blockerId, Long blockedId) {
+        return blockRepository.existsByBlockerIdAndBlockedId(blockerId, blockedId);
+    }
+
 }

@@ -82,6 +82,8 @@ public class User {
     @OneToMany(mappedBy = "blocked", cascade = CascadeType.REMOVE)
     private List<Block> blocksReceived = new ArrayList<>();
 
+    @OneToMany(mappedBy = "reposter", cascade = CascadeType.REMOVE)
+    private List<Repost> reposts = new ArrayList<>();
 
     @PrePersist
     protected void onCreate() {

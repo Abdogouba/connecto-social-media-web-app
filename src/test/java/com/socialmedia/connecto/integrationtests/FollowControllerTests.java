@@ -752,12 +752,16 @@ public class FollowControllerTests {
         return followRepository.save(follow);
     }
 
+    private int getRandomPositiveInt() {
+        return (int) (Math.random() * Integer.MAX_VALUE) + 1;
+    }
+
     private User createAndSaveUser() {
-        long count = userRepository.count();
+        long random = getRandomPositiveInt();
         User user = new User();
-        user.setEmail("user" + count + "@example.com");
+        user.setEmail("user" + random + "@example.com");
         user.setPassword(passwordEncoder.encode("password"));
-        user.setName("user" + count);
+        user.setName("user" + random);
         user.setRole(Role.USER);
         user.setGender(Gender.MALE);
         user.setPrivate(false);
