@@ -31,31 +31,15 @@ User - Admin - Super admin
 16.	Notification (id [PK], user_id-receiver [FK] [not null] [on delete cascade], user_id-sender [FK] [Not Null] [on delete cascade], type [not null], reference_id, is_read [default false], created_at)
 
 ## Requirements Done
-register
-login
-forgot password (receive a new password on email)
-change password
-create post (only text, no media)
-edit my post 
-repost 
-block profile
-unblock profile
-view blocked profiles
-follow
-unfollow
-remove follower (if user is private)
-view following list 
-view followers list
-view follow requests received (if user is private)
-respond to follow requests (if user is private)
-view follow requests sent
-cancel follow request sent
-suggested to follow (profiles your following follow)
-notifications
-get my notifications
-count unread notifications
-mark my notifications as read
+register - login - forgot password (receive a new password on email) - change password
+
+create post (only text, no media) - edit my post - repost 
+
+block profile - unblock profile - view blocked profiles
+
+follow - unfollow - remove follower (if user is private) - view following list - view followers list - view follow requests received (if user is private) - respond to follow requests (if user is private) - view follow requests sent - cancel follow request sent - suggested to follow (profiles your following follow)
+
+sending notifications - get my notifications - count unread notifications - mark my notifications as read
 
 ## Testing
-MockMVC integration tests
-
+Integration tests (MockMVC): all API endpoints implemented are tested.
