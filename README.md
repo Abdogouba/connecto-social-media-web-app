@@ -1,7 +1,7 @@
 # Connecto Social Media Web App Backend
 
 ## Status
-In progress, approximately half of the planned requiremnets are done.
+In progress, approximately half of the planned requirements are done.
 
 ## Technologies and Tools
 Java - Spring Boot - PostgreSQL - JWT authentication - Docker - Pagination - DB indexing - Lombok - Maven - Intellij
