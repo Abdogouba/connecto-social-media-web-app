@@ -13,6 +13,7 @@ controller -> controller advice (exception handler) -> service (interfaces and i
 User - Admin - Super admin
 
 ## Database Schema
+note: this is the plan, some entities are not implemented in code yet.
 1.	User (id [PK], name [not null], email [unique] [not null], password [not null], gender [not null], birth_date, location, bio, is_private [default false] [not null], is_banned [default false] [not null], role [default user], createdAt)
 2.	Post (id [PK], created_at, content [not null], user_id [FK] [not null] [on delete cascade])
 3.	Repost (id [PK], created_at, user_id [FK] [not null] [on delete cascade], post_id [FK] [not null] [on delete cascade])
