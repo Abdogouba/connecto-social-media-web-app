@@ -8,4 +8,6 @@ public interface RepostService {
 
     RepostResponseDTO repost(Long postId) throws AccessDeniedException;
 
+    void deleteRepost(Long id) throws AccessDeniedException;
+
 }

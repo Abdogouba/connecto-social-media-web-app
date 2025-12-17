@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import java.nio.file.AccessDeniedException;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 
 @Service
 public class RepostServiceImpl implements RepostService {
@@ -71,6 +72,22 @@ public class RepostServiceImpl implements RepostService {
         dto.setCreatedAt(repost.getCreatedAt());
 
         return dto;
+    }
+
+    @Override
+    public void deleteRepost(Long id) throws AccessDeniedException {
+        User user = userService.getCurrentUser();
+
+        Optional<Repost> repost = repostRepository.findById(id);
+
+        if (repost.isEmpty())
+            return;
+
+        Long reposterId = repost.get().getReposter().getId();
+        if (!reposterId.equals(user.getId()))
+            throw new AccessDeniedException("You cannot delete a repost that belongs to another user");
+
+        repostRepository.deleteById(id);
     }
 
 }

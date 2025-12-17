@@ -211,6 +211,35 @@ public class RepostControllerTests {
         assertEquals(post.getId(), notification2.getReferenceId());
     }
 
+    @Test
+    @WithMockUser(username = "reposter@example.com")
+    void deleteRepost_ShouldReturn204NoContent_WhenRepostExistsAndBelongsToUser() throws Exception {
+        Repost repost = createAndSaveRepost(reposter, post);
+
+        mockMvc.perform(delete("/api/reposts/" + repost.getId()))
+                .andExpect(status().isNoContent());
+
+        assertEquals(0, repostRepository.count());
+    }
+
+    @Test
+    @WithMockUser(username = "reposter@example.com")
+    void deleteRepost_ShouldReturn204NoContent_WhenRepostDoesNotExists() throws Exception {
+        mockMvc.perform(delete("/api/reposts/" + 5))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @WithMockUser(username = "reposter@example.com")
+    void deleteRepost_ShouldReturn403Forbidden_WhenRepostDoesNotBelongToUser() throws Exception {
+        Repost repost = createAndSaveRepost(poster, post);
+
+        mockMvc.perform(delete("/api/reposts/" + repost.getId()))
+                .andExpect(status().isForbidden());
+
+        assertEquals(1, repostRepository.count());
+    }
+
     private int getRandomPositiveInt() {
         return (int) (Math.random() * Integer.MAX_VALUE) + 1;
     }
