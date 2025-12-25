@@ -22,4 +22,6 @@ public interface FollowService {
     PagedDTO<FollowListUserDTO> getFollowers(Long id, int page, int size) throws AccessDeniedException;
 
     PagedDTO<FollowSuggestionUserDTO> getFollowSuggestions(int page, int size);
+
+    boolean isFollowing(Long followerId, Long followedId);
 }

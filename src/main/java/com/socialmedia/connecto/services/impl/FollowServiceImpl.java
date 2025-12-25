@@ -224,6 +224,11 @@ public class FollowServiceImpl implements FollowService {
         );
     }
 
+    @Override
+    public boolean isFollowing(Long followerId, Long followedId) {
+        return followRepository.existsByFollowerIdAndFollowedId(followerId, followedId);
+    }
+
     public void createAndSave(User currentUser, User target) {
         Follow follow = new Follow();
         follow.setFollower(currentUser);

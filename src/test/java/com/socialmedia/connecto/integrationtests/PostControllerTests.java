@@ -1,12 +1,8 @@
 package com.socialmedia.connecto.integrationtests;
 
 import com.socialmedia.connecto.auth.JwtUtil;
-import com.socialmedia.connecto.models.Gender;
-import com.socialmedia.connecto.models.Post;
-import com.socialmedia.connecto.models.Role;
-import com.socialmedia.connecto.models.User;
-import com.socialmedia.connecto.repositories.PostRepository;
-import com.socialmedia.connecto.repositories.UserRepository;
+import com.socialmedia.connecto.models.*;
+import com.socialmedia.connecto.repositories.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +24,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import org.springframework.security.test.context.support.WithMockUser;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 
 @SpringBootTest // loads the full application context
 @AutoConfigureMockMvc // enables MockMvc auto-configuration
@@ -44,6 +41,15 @@ public class PostControllerTests {
     private PostRepository postRepository;
 
     @Autowired
+    private RepostRepository repostRepository;
+
+    @Autowired
+    private BlockRepository blockRepository;
+
+    @Autowired
+    private FollowRepository followRepository;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Autowired
@@ -52,6 +58,9 @@ public class PostControllerTests {
     @BeforeEach
     void cleanDB() {
         // clean DB before each test
+        blockRepository.deleteAll();
+        followRepository.deleteAll();
+        repostRepository.deleteAll();
         postRepository.deleteAll();
         userRepository.deleteAll();
     }
@@ -73,7 +82,7 @@ public class PostControllerTests {
     @Test
     @WithMockUser(username = "test@example.com", roles = {"USER"})
     void createPost_ShouldReturn201_WhenValidInput() throws Exception {
-        User savedUser = createAndSaveUser();
+        User savedUser = createAndSaveTheUser();
 
         String requestBody = """
             {
@@ -102,7 +111,7 @@ public class PostControllerTests {
     @Test
     @WithMockUser(username = "test@example.com", roles = {"USER"})
     void createPost_ShouldReturn400BadRequest_WhenContentIsBlank() throws Exception {
-        User savedUser = createAndSaveUser();
+        User savedUser = createAndSaveTheUser();
 
         String requestBody = """
             {
@@ -122,7 +131,7 @@ public class PostControllerTests {
     @Test
     @WithMockUser(username = "test@example.com", roles = {"USER"})
     void updatePost_ShouldReturn200OkAndUpdatedPost_WhenValidInput() throws Exception {
-        User savedUser = createAndSaveUser();
+        User savedUser = createAndSaveTheUser();
 
         Post savedPost = createAndSavePost(savedUser);
 
@@ -153,7 +162,7 @@ public class PostControllerTests {
     @Test
     @WithMockUser(username = "test@example.com", roles = {"USER"})
     void updatePost_ShouldReturn404NotFound_WhenPostNotFound() throws Exception {
-        User savedUser = createAndSaveUser();
+        User savedUser = createAndSaveTheUser();
 
         String requestBody = """
             {
@@ -173,7 +182,7 @@ public class PostControllerTests {
     @Test
     @WithMockUser(username = "test1@example.com", roles = {"USER"})
     void updatePost_ShouldReturn403Forbidden_WhenPostNotOwnedByUser() throws Exception {
-        User savedUser = createAndSaveUser();
+        User savedUser = createAndSaveTheUser();
 
         Post savedPost = createAndSavePost(savedUser);
 
@@ -210,7 +219,7 @@ public class PostControllerTests {
     @Test
     @WithMockUser(username = "test@example.com", roles = {"USER"})
     void updatePost_ShouldReturn400BadRequest_WhenContentIsBlank() throws Exception {
-        User savedUser = createAndSaveUser();
+        User savedUser = createAndSaveTheUser();
 
         Post savedPost = createAndSavePost(savedUser);
 
@@ -230,6 +239,167 @@ public class PostControllerTests {
         assertEquals(savedPost.getContent(), post.getContent());
     }
 
+    @Test
+    @WithMockUser(username = "test@example.com", roles = {"USER"})
+    void getReposters_ShouldReturn404NotFound_WhenPostDoesNotExist() throws Exception {
+        User savedUser = createAndSaveTheUser();
+
+        mockMvc.perform(get("/api/posts/1/reposts"))
+                .andExpect(status().isNotFound())
+                .andExpect(content().string("Post not found"));
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com", roles = {"USER"})
+    void getReposters_ShouldReturn403Forbidden_WhenPosterIsPrivateAndUserNotFollowing() throws Exception {
+        User savedUser = createAndSaveTheUser();
+
+        User poster = createAndSaveUser();
+        poster.setPrivate(true);
+        poster = userRepository.save(poster);
+
+        Post post = createAndSavePost(poster);
+
+        mockMvc.perform(get("/api/posts/" + post.getId() + "/reposts"))
+                .andExpect(status().isForbidden())
+                .andExpect(content().string("You cannot access a post of a private user you are not following"));
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com", roles = {"USER"})
+    void getReposters_ShouldReturn403Forbidden_WhenPosterIsBlockedByUser() throws Exception {
+        User savedUser = createAndSaveTheUser();
+
+        User poster = createAndSaveUser();
+        Post post = createAndSavePost(poster);
+
+        createAndSaveBlock(savedUser, poster);
+
+        mockMvc.perform(get("/api/posts/" + post.getId() + "/reposts"))
+                .andExpect(status().isForbidden())
+                .andExpect(content().string("You cannot access a post of a user you blocked"));
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com", roles = {"USER"})
+    void getReposters_ShouldReturn403Forbidden_WhenPosterBlocksUser() throws Exception {
+        User savedUser = createAndSaveTheUser();
+
+        User poster = createAndSaveUser();
+        Post post = createAndSavePost(poster);
+
+        createAndSaveBlock(poster, savedUser);
+
+        mockMvc.perform(get("/api/posts/" + post.getId() + "/reposts"))
+                .andExpect(status().isForbidden())
+                .andExpect(content().string("You cannot access a post of a user that blocked you"));
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com", roles = {"USER"})
+    void getReposters_ShouldReturn200OkAndEmptyList_WhenNoReposts() throws Exception {
+        User savedUser = createAndSaveTheUser();
+
+        User poster = createAndSaveUser();
+        Post post = createAndSavePost(poster);
+
+        mockMvc.perform(get("/api/posts/" + post.getId() + "/reposts"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.list.length()").value(0))
+                .andExpect(jsonPath("$.totalItems").value(0));
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com", roles = {"USER"})
+    void getReposters_ShouldReturn200OkAndPagedList_WhenRepostsExist() throws Exception {
+        User savedUser = createAndSaveTheUser();
+
+        User poster = createAndSaveUser();
+        Post post = createAndSavePost(poster);
+
+        User reposter1 = createAndSaveUser();
+        Repost repost1 = createAndSaveRepost(reposter1, post);
+
+        try {
+            Thread.sleep(1000); // wait 1 second
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
+        User reposter2 = createAndSaveUser();
+        Repost repost2 = createAndSaveRepost(reposter2, post);
+
+        User reposter3 = createAndSaveUser();
+        Repost repost3 = createAndSaveRepost(reposter3, post);
+        createAndSaveBlock(savedUser, reposter3);
+
+        User reposter4 = createAndSaveUser();
+        Repost repost4 = createAndSaveRepost(reposter4, post);
+        createAndSaveBlock(reposter4, savedUser);
+
+        mockMvc.perform(get("/api/posts/" + post.getId() + "/reposts"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.list.length()").value(2))
+                .andExpect(jsonPath("$.list[0].id").value(reposter2.getId()))
+                .andExpect(jsonPath("$.list[0].name").value(reposter2.getName()))
+                .andExpect(jsonPath("$.list[0].repostedAt").exists())
+                .andExpect(jsonPath("$.list[1].id").value(reposter1.getId()))
+                .andExpect(jsonPath("$.list[1].name").value(reposter1.getName()))
+                .andExpect(jsonPath("$.list[1].repostedAt").exists())
+                .andExpect(jsonPath("$.currentPage").value(0))
+                .andExpect(jsonPath("$.totalPages").value(1))
+                .andExpect(jsonPath("$.totalItems").value(2));
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com", roles = {"USER"})
+    void getReposters_ShouldReturn200OkAndPagedList_WhenRepostsExistAndPosterPrivateAndUserFollowsPoster() throws Exception {
+        User savedUser = createAndSaveTheUser();
+
+        User poster = createAndSaveUser();
+        poster.setPrivate(true);
+        poster = userRepository.save(poster);
+        createAndSaveFollow(savedUser, poster);
+        Post post = createAndSavePost(poster);
+
+        User reposter1 = createAndSaveUser();
+        createAndSaveFollow(reposter1, poster);
+        Repost repost1 = createAndSaveRepost(reposter1, post);
+
+        try {
+            Thread.sleep(1000); // wait 1 second
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
+        User reposter2 = createAndSaveUser();
+        createAndSaveFollow(reposter2, poster);
+        Repost repost2 = createAndSaveRepost(reposter2, post);
+
+        User reposter3 = createAndSaveUser();
+        createAndSaveFollow(reposter3, poster);
+        Repost repost3 = createAndSaveRepost(reposter3, post);
+        createAndSaveBlock(savedUser, reposter3);
+
+        User reposter4 = createAndSaveUser();
+        createAndSaveFollow(reposter4, poster);
+        Repost repost4 = createAndSaveRepost(reposter4, post);
+        createAndSaveBlock(reposter4, savedUser);
+
+        mockMvc.perform(get("/api/posts/" + post.getId() + "/reposts"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.list.length()").value(2))
+                .andExpect(jsonPath("$.list[0].id").value(reposter2.getId()))
+                .andExpect(jsonPath("$.list[0].name").value(reposter2.getName()))
+                .andExpect(jsonPath("$.list[0].repostedAt").exists())
+                .andExpect(jsonPath("$.list[1].id").value(reposter1.getId()))
+                .andExpect(jsonPath("$.list[1].name").value(reposter1.getName()))
+                .andExpect(jsonPath("$.list[1].repostedAt").exists())
+                .andExpect(jsonPath("$.currentPage").value(0))
+                .andExpect(jsonPath("$.totalPages").value(1))
+                .andExpect(jsonPath("$.totalItems").value(2));
+    }
+
     private Post createAndSavePost(User savedUser) {
         Post post = new Post();
         post.setContent("This is my first post!");
@@ -237,7 +407,7 @@ public class PostControllerTests {
         return postRepository.save(post);
     }
 
-    private User createAndSaveUser() {
+    private User createAndSaveTheUser() {
         User user = new User();
         user.setEmail("test@example.com");
         user.setPassword(passwordEncoder.encode("12345678"));
@@ -251,6 +421,46 @@ public class PostControllerTests {
         user.setBio("my bio");
 
         return userRepository.save(user);
+    }
+
+    private int getRandomPositiveInt() {
+        return (int) (Math.random() * Integer.MAX_VALUE) + 1;
+    }
+
+    private User createAndSaveUser() {
+        long random = getRandomPositiveInt();
+        User user = new User();
+        user.setEmail("user" + random + "@example.com");
+        user.setPassword(passwordEncoder.encode("password"));
+        user.setName("user" + random);
+        user.setRole(Role.USER);
+        user.setGender(Gender.MALE);
+        user.setPrivate(false);
+        user.setBanned(false);
+        user.setBirthDate(LocalDate.of(2000, 1, 1));
+        return userRepository.save(user);
+    }
+
+    private Repost createAndSaveRepost(User user, Post post) {
+        Repost repost = new Repost();
+        repost.setReposter(user);
+        repost.setPost(post);
+        return repostRepository.save(repost);
+    }
+
+    private Block createAndSaveBlock(User blocker, User blocked) {
+        Block block = new Block();
+        block.setBlocker(blocker);
+        block.setBlocked(blocked);
+        block = blockRepository.save(block);
+        return block;
+    }
+
+    private Follow createAndSaveFollow(User follower, User followed) {
+        Follow follow = new Follow();
+        follow.setFollower(follower);
+        follow.setFollowed(followed);
+        return followRepository.save(follow);
     }
 
 }

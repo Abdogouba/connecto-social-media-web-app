@@ -1,7 +1,6 @@
 package com.socialmedia.connecto.controllers;
 
-import com.socialmedia.connecto.dtos.PostRequestDTO;
-import com.socialmedia.connecto.dtos.PostResponseDTO;
+import com.socialmedia.connecto.dtos.*;
 import com.socialmedia.connecto.services.PostService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -31,6 +30,15 @@ public class PostController {
     public ResponseEntity updatePost(@PathVariable Long id, @Valid @RequestBody PostRequestDTO dto) throws AccessDeniedException {
         PostResponseDTO responseDTO = postService.updatePost(id, dto);
         return ResponseEntity.ok(responseDTO);
+    }
+
+    @GetMapping("/{id}/reposts")
+    public ResponseEntity<PagedDTO<ReposterDTO>> getReposters(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) throws AccessDeniedException {
+        PagedDTO<ReposterDTO> response = postService.getReposters(id, page, size);
+        return ResponseEntity.ok(response);
     }
 
 }
