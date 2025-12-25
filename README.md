@@ -34,7 +34,7 @@ note: this is the plan, some entities are not implemented in code yet.
 ## Requirements Done
 register - login - forgot password (receive a new password on email) - change password
 
-create post (only text, no media) - edit my post - repost 
+create post (only text, no media) - edit my post - repost - delete repost
 
 block profile - unblock profile - view blocked profiles
 
