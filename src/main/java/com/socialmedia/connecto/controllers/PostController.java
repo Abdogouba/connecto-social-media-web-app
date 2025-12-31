@@ -41,5 +41,11 @@ public class PostController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/{id}/save")
+    public ResponseEntity<String> savePost(@PathVariable Long id) throws AccessDeniedException {
+        postService.savePost(id);
+        return ResponseEntity.status(HttpStatus.OK).body("Post saved successfully");
+    }
+
 }
 

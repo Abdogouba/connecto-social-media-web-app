@@ -85,6 +85,9 @@ public class User {
     @OneToMany(mappedBy = "reposter", cascade = CascadeType.REMOVE)
     private List<Repost> reposts = new ArrayList<>();
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE)
+    private List<SavedPost> savedPosts = new ArrayList<>();
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();

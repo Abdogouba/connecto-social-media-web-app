@@ -19,4 +19,6 @@ public interface PostService {
 
     PagedDTO<ReposterDTO> getReposters(Long postId, int page, int size) throws AccessDeniedException;
 
+    void savePost(Long postId) throws AccessDeniedException;
+
 }

@@ -50,6 +50,9 @@ public class PostControllerTests {
     private FollowRepository followRepository;
 
     @Autowired
+    private SavedPostRepository savedPostRepository;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Autowired
@@ -58,6 +61,7 @@ public class PostControllerTests {
     @BeforeEach
     void cleanDB() {
         // clean DB before each test
+        savedPostRepository.deleteAll();
         blockRepository.deleteAll();
         followRepository.deleteAll();
         repostRepository.deleteAll();
@@ -398,6 +402,147 @@ public class PostControllerTests {
                 .andExpect(jsonPath("$.currentPage").value(0))
                 .andExpect(jsonPath("$.totalPages").value(1))
                 .andExpect(jsonPath("$.totalItems").value(2));
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com", roles = {"USER"})
+    void savePost_ShouldReturn404NotFound_WhenPostDoesNotExist() throws Exception {
+        User savedUser = createAndSaveTheUser();
+
+        mockMvc.perform(post("/api/posts/1/save"))
+                .andExpect(status().isNotFound())
+                .andExpect(content().string("Post not found"));
+
+        assertEquals(0, savedPostRepository.count());
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com", roles = {"USER"})
+    void savePost_ShouldReturn403Forbidden_WhenPosterPrivateAndUserNotFollowing() throws Exception {
+        User savedUser = createAndSaveTheUser();
+
+        User poster = createAndSaveUser();
+        poster.setPrivate(true);
+        poster = userRepository.save(poster);
+
+        Post post = createAndSavePost(poster);
+
+        mockMvc.perform(post("/api/posts/" + post.getId() + "/save"))
+                .andExpect(status().isForbidden())
+                .andExpect(content().string("You cannot access a post of a private user you are not following"));
+
+        assertEquals(0, savedPostRepository.count());
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com", roles = {"USER"})
+    void savePost_ShouldReturn403Forbidden_WhenPosterBlocksUser() throws Exception {
+        User savedUser = createAndSaveTheUser();
+
+        User poster = createAndSaveUser();
+
+        createAndSaveBlock(poster, savedUser);
+
+        Post post = createAndSavePost(poster);
+
+        mockMvc.perform(post("/api/posts/" + post.getId() + "/save"))
+                .andExpect(status().isForbidden())
+                .andExpect(content().string("You cannot access a post of a user that blocked you"));
+
+        assertEquals(0, savedPostRepository.count());
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com", roles = {"USER"})
+    void savePost_ShouldReturn403Forbidden_WhenUserBlocksPoster() throws Exception {
+        User savedUser = createAndSaveTheUser();
+
+        User poster = createAndSaveUser();
+
+        createAndSaveBlock(savedUser, poster);
+
+        Post post = createAndSavePost(poster);
+
+        mockMvc.perform(post("/api/posts/" + post.getId() + "/save"))
+                .andExpect(status().isForbidden())
+                .andExpect(content().string("You cannot access a post of a user you blocked"));
+
+        assertEquals(0, savedPostRepository.count());
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com", roles = {"USER"})
+    void savePost_ShouldReturn200Ok_WhenPostAlreadySaved() throws Exception {
+        User savedUser = createAndSaveTheUser();
+
+        User poster = createAndSaveUser();
+
+        Post post = createAndSavePost(poster);
+
+        createAndSaveSavedPost(savedUser, post);
+
+        mockMvc.perform(post("/api/posts/" + post.getId() + "/save"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Post saved successfully"));
+
+        assertEquals(1, savedPostRepository.count());
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com", roles = {"USER"})
+    void savePost_ShouldReturn200OkAndSavePost_WhenPosterIsCurrentUser() throws Exception {
+        User savedUser = createAndSaveTheUser();
+
+        Post post = createAndSavePost(savedUser);
+
+        mockMvc.perform(post("/api/posts/" + post.getId() + "/save"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Post saved successfully"));
+
+        assertTrue(savedPostRepository.existsByUserIdAndPostId(savedUser.getId(), post.getId()));
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com", roles = {"USER"})
+    void savePost_ShouldReturn200OkAndSavePost_WhenPosterIsPublic() throws Exception {
+        User savedUser = createAndSaveTheUser();
+
+        User poster = createAndSaveUser();
+
+        Post post = createAndSavePost(poster);
+
+        mockMvc.perform(post("/api/posts/" + post.getId() + "/save"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Post saved successfully"));
+
+        assertTrue(savedPostRepository.existsByUserIdAndPostId(savedUser.getId(), post.getId()));
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com", roles = {"USER"})
+    void savePost_ShouldReturn200OkAndSavePost_WhenPosterPrivateAndUserFollowing() throws Exception {
+        User savedUser = createAndSaveTheUser();
+
+        User poster = createAndSaveUser();
+        poster.setPrivate(true);
+        poster = userRepository.save(poster);
+
+        createAndSaveFollow(savedUser, poster);
+
+        Post post = createAndSavePost(poster);
+
+        mockMvc.perform(post("/api/posts/" + post.getId() + "/save"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Post saved successfully"));
+
+        assertTrue(savedPostRepository.existsByUserIdAndPostId(savedUser.getId(), post.getId()));
+    }
+
+    private SavedPost createAndSaveSavedPost(User user, Post post) {
+        SavedPost savedPost = new SavedPost();
+        savedPost.setUser(user);
+        savedPost.setPost(post);
+        return savedPostRepository.save(savedPost);
     }
 
     private Post createAndSavePost(User savedUser) {

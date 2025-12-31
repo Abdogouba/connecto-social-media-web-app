@@ -3,9 +3,11 @@ package com.socialmedia.connecto.services.impl;
 import com.socialmedia.connecto.dtos.*;
 import com.socialmedia.connecto.models.Follow;
 import com.socialmedia.connecto.models.Post;
+import com.socialmedia.connecto.models.SavedPost;
 import com.socialmedia.connecto.models.User;
 import com.socialmedia.connecto.repositories.PostRepository;
 import com.socialmedia.connecto.repositories.RepostRepository;
+import com.socialmedia.connecto.repositories.SavedPostRepository;
 import com.socialmedia.connecto.services.BlockService;
 import com.socialmedia.connecto.services.FollowService;
 import com.socialmedia.connecto.services.PostService;
@@ -28,13 +30,15 @@ public class PostServiceImpl implements PostService {
     private final FollowService followService;
     private final BlockService blockService;
     private final RepostRepository repostRepository;
+    private final SavedPostRepository savedPostRepository;
 
-    public PostServiceImpl(PostRepository postRepository, UserService userService, FollowService followService, BlockService blockService, RepostRepository repostRepository) {
+    public PostServiceImpl(PostRepository postRepository, UserService userService, FollowService followService, BlockService blockService, RepostRepository repostRepository, SavedPostRepository savedPostRepository) {
         this.postRepository = postRepository;
         this.userService = userService;
         this.followService = followService;
         this.blockService = blockService;
         this.repostRepository = repostRepository;
+        this.savedPostRepository = savedPostRepository;
     }
 
     @Override
@@ -110,6 +114,31 @@ public class PostServiceImpl implements PostService {
                 reposterDTOPage.getTotalPages(),
                 reposterDTOPage.getTotalElements()
         );
+    }
+
+    @Override
+    public void savePost(Long postId) throws AccessDeniedException {
+        User currentUser = userService.getCurrentUser();
+
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new NoSuchElementException("Post not found"));
+
+        if (post.getUser().isPrivate() && !followService.isFollowing(currentUser.getId(), post.getUser().getId()))
+            throw new AccessDeniedException("You cannot access a post of a private user you are not following");
+
+        if (blockService.isBlocked(currentUser.getId(), post.getUser().getId()))
+            throw new AccessDeniedException("You cannot access a post of a user you blocked");
+
+        if (blockService.isBlocked(post.getUser().getId(), currentUser.getId()))
+            throw new AccessDeniedException("You cannot access a post of a user that blocked you");
+
+        if (savedPostRepository.existsByUserIdAndPostId(currentUser.getId(), postId))
+            return;
+
+        SavedPost savedPost = new SavedPost();
+        savedPost.setUser(currentUser);
+        savedPost.setPost(post);
+        savedPostRepository.save(savedPost);
     }
 
 }
