@@ -25,6 +25,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 
 @SpringBootTest // loads the full application context
 @AutoConfigureMockMvc // enables MockMvc auto-configuration
@@ -536,6 +537,44 @@ public class PostControllerTests {
                 .andExpect(content().string("Post saved successfully"));
 
         assertTrue(savedPostRepository.existsByUserIdAndPostId(savedUser.getId(), post.getId()));
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com", roles = {"USER"})
+    void unsavePost_ShouldReturn404NotFound_WhenPostDoesNotExist() throws Exception {
+        User savedUser = createAndSaveTheUser();
+
+        mockMvc.perform(delete("/api/posts/5/save"))
+                .andExpect(status().isNotFound())
+                .andExpect(content().string("Post not found"));
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com", roles = {"USER"})
+    void unsavePost_ShouldReturn204NoContent_WhenPostIsNotSaved() throws Exception {
+        User savedUser = createAndSaveTheUser();
+
+        User poster = createAndSaveUser();
+        Post post = createAndSavePost(poster);
+
+        mockMvc.perform(delete("/api/posts/" + post.getId() + "/save"))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com", roles = {"USER"})
+    void unsavePost_ShouldReturn204NoContentAndUnsavePost_WhenPostIsSaved() throws Exception {
+        User savedUser = createAndSaveTheUser();
+
+        User poster = createAndSaveUser();
+        Post post = createAndSavePost(poster);
+
+        SavedPost savedPost = createAndSaveSavedPost(savedUser, post);
+
+        mockMvc.perform(delete("/api/posts/" + post.getId() + "/save"))
+                .andExpect(status().isNoContent());
+
+        assertEquals(0, savedPostRepository.count());
     }
 
     private SavedPost createAndSaveSavedPost(User user, Post post) {

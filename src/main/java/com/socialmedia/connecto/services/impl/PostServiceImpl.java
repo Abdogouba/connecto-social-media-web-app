@@ -16,6 +16,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.file.AccessDeniedException;
 import java.util.List;
@@ -139,6 +140,17 @@ public class PostServiceImpl implements PostService {
         savedPost.setUser(currentUser);
         savedPost.setPost(post);
         savedPostRepository.save(savedPost);
+    }
+
+    @Override
+    @Transactional
+    public void unsavePost(Long postId) {
+        User currentUser = userService.getCurrentUser();
+
+        if (!postRepository.existsById(postId))
+            throw new NoSuchElementException("Post not found");
+
+        savedPostRepository.deleteByUserIdAndPostId(currentUser.getId(), postId);
     }
 
 }

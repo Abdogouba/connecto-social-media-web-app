@@ -47,5 +47,11 @@ public class PostController {
         return ResponseEntity.status(HttpStatus.OK).body("Post saved successfully");
     }
 
+    @DeleteMapping("/{id}/save")
+    public ResponseEntity unsavePost(@PathVariable Long id) {
+        postService.unsavePost(id);
+        return new ResponseEntity(HttpStatus.NO_CONTENT);
+    }
+
 }
 
