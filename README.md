@@ -36,7 +36,7 @@ register - login - forgot password (receive a new password on email) - change pa
 
 create post (only text, no media) - edit my post
 
-repost - delete repost - view reposts of a post - save post
+repost - delete repost - view reposts of a post - save/unsave post
 
 block profile - unblock profile - view blocked profiles
 
