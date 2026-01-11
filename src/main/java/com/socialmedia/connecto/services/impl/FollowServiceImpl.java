@@ -3,6 +3,7 @@ package com.socialmedia.connecto.services.impl;
 import com.socialmedia.connecto.dtos.FollowListUserDTO;
 import com.socialmedia.connecto.dtos.FollowSuggestionUserDTO;
 import com.socialmedia.connecto.dtos.PagedDTO;
+import com.socialmedia.connecto.enums.NotificationType;
 import com.socialmedia.connecto.models.*;
 import com.socialmedia.connecto.repositories.BlockRepository;
 import com.socialmedia.connecto.repositories.FollowRepository;

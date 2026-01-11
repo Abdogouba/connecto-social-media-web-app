@@ -4,20 +4,17 @@ import com.socialmedia.connecto.auth.JwtUtil;
 import com.socialmedia.connecto.dtos.LoginRequestDTO;
 import com.socialmedia.connecto.dtos.LoginResponseDTO;
 import com.socialmedia.connecto.dtos.UserRegistrationDTO;
-import com.socialmedia.connecto.models.Gender;
-import com.socialmedia.connecto.models.Role;
+import com.socialmedia.connecto.enums.Gender;
+import com.socialmedia.connecto.enums.Role;
 import com.socialmedia.connecto.models.User;
 import com.socialmedia.connecto.repositories.UserRepository;
 import com.socialmedia.connecto.services.AuthenticationService;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.file.AccessDeniedException;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.UUID;
 

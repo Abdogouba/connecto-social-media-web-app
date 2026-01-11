@@ -1,5 +1,8 @@
 package com.socialmedia.connecto.integrationtests;
 
+import com.socialmedia.connecto.enums.Gender;
+import com.socialmedia.connecto.enums.NotificationType;
+import com.socialmedia.connecto.enums.Role;
 import com.socialmedia.connecto.models.*;
 import com.socialmedia.connecto.repositories.NotificationRepository;
 import com.socialmedia.connecto.repositories.UserRepository;

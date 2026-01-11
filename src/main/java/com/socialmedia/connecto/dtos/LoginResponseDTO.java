@@ -1,8 +1,7 @@
 package com.socialmedia.connecto.dtos;
 
-import com.socialmedia.connecto.models.Gender;
-import com.socialmedia.connecto.models.Role;
-import jakarta.persistence.*;
+import com.socialmedia.connecto.enums.Gender;
+import com.socialmedia.connecto.enums.Role;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

@@ -1,5 +1,7 @@
 package com.socialmedia.connecto.models;
 
+import com.socialmedia.connecto.enums.Gender;
+import com.socialmedia.connecto.enums.Role;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -87,6 +89,9 @@ public class User {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE)
     private List<SavedPost> savedPosts = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE)
+    private List<PostReaction> postReactions = new ArrayList<>();
 
     @PrePersist
     protected void onCreate() {

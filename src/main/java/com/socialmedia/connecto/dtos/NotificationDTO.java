@@ -1,7 +1,5 @@
 package com.socialmedia.connecto.dtos;
 
-import com.socialmedia.connecto.models.NotificationType;
-import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

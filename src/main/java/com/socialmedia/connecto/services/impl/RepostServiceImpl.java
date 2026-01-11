@@ -1,6 +1,7 @@
 package com.socialmedia.connecto.services.impl;
 
 import com.socialmedia.connecto.dtos.RepostResponseDTO;
+import com.socialmedia.connecto.enums.NotificationType;
 import com.socialmedia.connecto.models.*;
 import com.socialmedia.connecto.repositories.RepostRepository;
 import com.socialmedia.connecto.services.*;

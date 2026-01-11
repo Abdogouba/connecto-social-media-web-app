@@ -1,8 +1,8 @@
 package com.socialmedia.connecto.integrationtests;
 
 import com.socialmedia.connecto.auth.JwtUtil;
-import com.socialmedia.connecto.models.Gender;
-import com.socialmedia.connecto.models.Role;
+import com.socialmedia.connecto.enums.Gender;
+import com.socialmedia.connecto.enums.Role;
 import com.socialmedia.connecto.models.User;
 import com.socialmedia.connecto.repositories.UserRepository;
 import org.junit.jupiter.api.BeforeEach;

@@ -3,7 +3,7 @@ package com.socialmedia.connecto.services.impl;
 import com.socialmedia.connecto.dtos.BlockedUserDTO;
 import com.socialmedia.connecto.dtos.PagedDTO;
 import com.socialmedia.connecto.models.Block;
-import com.socialmedia.connecto.models.Role;
+import com.socialmedia.connecto.enums.Role;
 import com.socialmedia.connecto.models.User;
 import com.socialmedia.connecto.repositories.BlockRepository;
 import com.socialmedia.connecto.services.*;

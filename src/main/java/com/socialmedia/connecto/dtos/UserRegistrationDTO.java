@@ -1,6 +1,5 @@
 package com.socialmedia.connecto.dtos;
 
-import com.socialmedia.connecto.models.Gender;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;

@@ -1,5 +1,8 @@
 package com.socialmedia.connecto.integrationtests;
 
+import com.socialmedia.connecto.enums.Gender;
+import com.socialmedia.connecto.enums.NotificationType;
+import com.socialmedia.connecto.enums.Role;
 import com.socialmedia.connecto.models.*;
 import com.socialmedia.connecto.repositories.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -8,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;

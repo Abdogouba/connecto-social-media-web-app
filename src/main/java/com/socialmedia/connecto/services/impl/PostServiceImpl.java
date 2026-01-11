@@ -1,17 +1,14 @@
 package com.socialmedia.connecto.services.impl;
 
 import com.socialmedia.connecto.dtos.*;
-import com.socialmedia.connecto.models.Follow;
-import com.socialmedia.connecto.models.Post;
-import com.socialmedia.connecto.models.SavedPost;
-import com.socialmedia.connecto.models.User;
+import com.socialmedia.connecto.enums.NotificationType;
+import com.socialmedia.connecto.enums.ReactionType;
+import com.socialmedia.connecto.models.*;
+import com.socialmedia.connecto.repositories.PostReactionRepository;
 import com.socialmedia.connecto.repositories.PostRepository;
 import com.socialmedia.connecto.repositories.RepostRepository;
 import com.socialmedia.connecto.repositories.SavedPostRepository;
-import com.socialmedia.connecto.services.BlockService;
-import com.socialmedia.connecto.services.FollowService;
-import com.socialmedia.connecto.services.PostService;
-import com.socialmedia.connecto.services.UserService;
+import com.socialmedia.connecto.services.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -32,14 +29,18 @@ public class PostServiceImpl implements PostService {
     private final BlockService blockService;
     private final RepostRepository repostRepository;
     private final SavedPostRepository savedPostRepository;
+    private final PostReactionRepository postReactionRepository;
+    private final NotificationService notificationService;
 
-    public PostServiceImpl(PostRepository postRepository, UserService userService, FollowService followService, BlockService blockService, RepostRepository repostRepository, SavedPostRepository savedPostRepository) {
+    public PostServiceImpl(PostRepository postRepository, UserService userService, FollowService followService, BlockService blockService, RepostRepository repostRepository, SavedPostRepository savedPostRepository, PostReactionRepository postReactionRepository, NotificationService notificationService) {
         this.postRepository = postRepository;
         this.userService = userService;
         this.followService = followService;
         this.blockService = blockService;
         this.repostRepository = repostRepository;
         this.savedPostRepository = savedPostRepository;
+        this.postReactionRepository = postReactionRepository;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -94,14 +95,7 @@ public class PostServiceImpl implements PostService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new NoSuchElementException("Post not found"));
 
-        if (post.getUser().isPrivate() && !followService.isFollowing(currentUser.getId(), post.getUser().getId()))
-            throw new AccessDeniedException("You cannot access a post of a private user you are not following");
-
-        if (blockService.isBlocked(currentUser.getId(), post.getUser().getId()))
-            throw new AccessDeniedException("You cannot access a post of a user you blocked");
-
-        if (blockService.isBlocked(post.getUser().getId(), currentUser.getId()))
-            throw new AccessDeniedException("You cannot access a post of a user that blocked you");
+        checkSecurity(post, currentUser);
 
         Pageable pageable = PageRequest.of(page, size);
 
@@ -124,14 +118,7 @@ public class PostServiceImpl implements PostService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new NoSuchElementException("Post not found"));
 
-        if (post.getUser().isPrivate() && !followService.isFollowing(currentUser.getId(), post.getUser().getId()))
-            throw new AccessDeniedException("You cannot access a post of a private user you are not following");
-
-        if (blockService.isBlocked(currentUser.getId(), post.getUser().getId()))
-            throw new AccessDeniedException("You cannot access a post of a user you blocked");
-
-        if (blockService.isBlocked(post.getUser().getId(), currentUser.getId()))
-            throw new AccessDeniedException("You cannot access a post of a user that blocked you");
+        checkSecurity(post, currentUser);
 
         if (savedPostRepository.existsByUserIdAndPostId(currentUser.getId(), postId))
             return;
@@ -151,6 +138,53 @@ public class PostServiceImpl implements PostService {
             throw new NoSuchElementException("Post not found");
 
         savedPostRepository.deleteByUserIdAndPostId(currentUser.getId(), postId);
+    }
+
+    @Override
+    @Transactional
+    public void likePost(Long postId) throws AccessDeniedException {
+        User currentUser = userService.getCurrentUser();
+
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new NoSuchElementException("Post not found"));
+
+        checkSecurity(post, currentUser);
+
+        Optional<PostReaction> postReaction = postReactionRepository.findByUserIdAndPostId(currentUser.getId(), postId);
+
+        if (postReaction.isPresent() && postReaction.get().getType() == ReactionType.LIKE)
+            return;
+        else if (postReaction.isPresent() && postReaction.get().getType() == ReactionType.DISLIKE) {
+            postReaction.get().setType(ReactionType.LIKE);
+            // no need to update manually here, spring boot does it for you (managed entity)
+        } else {
+            PostReaction pr =  new PostReaction();
+            pr.setUser(currentUser);
+            pr.setPost(post);
+            pr.setType(ReactionType.LIKE);
+            postReactionRepository.save(pr);
+        }
+
+        if (post.getUser().getId().equals(currentUser.getId()))
+            return;
+
+        Notification notification = new Notification();
+        notification.setReceiver(post.getUser());
+        notification.setSender(currentUser);
+        notification.setType(NotificationType.LIKED_POST);
+        notification.setReferenceId(postId);
+        notificationService.saveNotification(notification);
+    }
+
+    private void checkSecurity(Post post, User currentUser) throws AccessDeniedException {
+        if (post.getUser().isPrivate() && !followService.isFollowing(currentUser.getId(), post.getUser().getId()))
+            throw new AccessDeniedException("You cannot access a post of a private user you are not following");
+
+        if (blockService.isBlocked(currentUser.getId(), post.getUser().getId()))
+            throw new AccessDeniedException("You cannot access a post of a user you blocked");
+
+        if (blockService.isBlocked(post.getUser().getId(), currentUser.getId()))
+            throw new AccessDeniedException("You cannot access a post of a user that blocked you");
     }
 
 }

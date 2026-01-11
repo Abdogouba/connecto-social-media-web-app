@@ -1,6 +1,10 @@
 package com.socialmedia.connecto.integrationtests;
 
 import com.socialmedia.connecto.auth.JwtUtil;
+import com.socialmedia.connecto.enums.Gender;
+import com.socialmedia.connecto.enums.NotificationType;
+import com.socialmedia.connecto.enums.ReactionType;
+import com.socialmedia.connecto.enums.Role;
 import com.socialmedia.connecto.models.*;
 import com.socialmedia.connecto.repositories.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -54,6 +58,12 @@ public class PostControllerTests {
     private SavedPostRepository savedPostRepository;
 
     @Autowired
+    private PostReactionRepository postReactionRepository;
+
+    @Autowired
+    private NotificationRepository notificationRepository;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Autowired
@@ -62,6 +72,8 @@ public class PostControllerTests {
     @BeforeEach
     void cleanDB() {
         // clean DB before each test
+        notificationRepository.deleteAll();
+        postReactionRepository.deleteAll();
         savedPostRepository.deleteAll();
         blockRepository.deleteAll();
         followRepository.deleteAll();
@@ -575,6 +587,222 @@ public class PostControllerTests {
                 .andExpect(status().isNoContent());
 
         assertEquals(0, savedPostRepository.count());
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com", roles = {"USER"})
+    void likePost_ShouldReturn404NotFound_WhenPostDoesNotExist() throws Exception {
+        createAndSaveTheUser();
+
+        mockMvc.perform(post("/api/posts/1/like"))
+                .andExpect(status().isNotFound())
+                .andExpect(content().string("Post not found"));
+
+        assertEquals(0, postReactionRepository.count());
+        assertEquals(0, notificationRepository.count());
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com", roles = {"USER"})
+    void likePost_ShouldReturn403Forbidden_WhenPosterPrivateAndUserNotFollowing() throws Exception {
+        createAndSaveTheUser();
+
+        User poster = createAndSaveUser();
+        poster.setPrivate(true);
+        poster = userRepository.save(poster);
+
+        Post post = createAndSavePost(poster);
+
+        mockMvc.perform(post("/api/posts/" + post.getId() + "/like"))
+                .andExpect(status().isForbidden())
+                .andExpect(content().string("You cannot access a post of a private user you are not following"));
+
+        assertEquals(0, postReactionRepository.count());
+        assertEquals(0, notificationRepository.count());
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com", roles = {"USER"})
+    void likePost_ShouldReturn403Forbidden_WhenPosterBlocksUser() throws Exception {
+        User savedUser = createAndSaveTheUser();
+
+        User poster = createAndSaveUser();
+
+        createAndSaveBlock(poster, savedUser);
+
+        Post post = createAndSavePost(poster);
+
+        mockMvc.perform(post("/api/posts/" + post.getId() + "/like"))
+                .andExpect(status().isForbidden())
+                .andExpect(content().string("You cannot access a post of a user that blocked you"));
+
+        assertEquals(0, postReactionRepository.count());
+        assertEquals(0, notificationRepository.count());
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com", roles = {"USER"})
+    void likePost_ShouldReturn403Forbidden_WhenUserBlocksPoster() throws Exception {
+        User savedUser = createAndSaveTheUser();
+
+        User poster = createAndSaveUser();
+
+        createAndSaveBlock(savedUser, poster);
+
+        Post post = createAndSavePost(poster);
+
+        mockMvc.perform(post("/api/posts/" + post.getId() + "/like"))
+                .andExpect(status().isForbidden())
+                .andExpect(content().string("You cannot access a post of a user you blocked"));
+
+        assertEquals(0, postReactionRepository.count());
+        assertEquals(0, notificationRepository.count());
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com", roles = {"USER"})
+    void likePost_ShouldReturn204NoContent_WhenUserAlreadyLikesPost() throws Exception {
+        User savedUser = createAndSaveTheUser();
+
+        User poster = createAndSaveUser();
+
+        Post post = createAndSavePost(poster);
+
+        PostReaction postReaction = new PostReaction();
+        postReaction.setPost(post);
+        postReaction.setUser(savedUser);
+        postReaction.setType(ReactionType.LIKE);
+        postReaction = postReactionRepository.save(postReaction);
+
+        mockMvc.perform(post("/api/posts/" + post.getId() + "/like"))
+                .andExpect(status().isNoContent());
+
+        assertEquals(1, postReactionRepository.count());
+        assertEquals(0, notificationRepository.count());
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com", roles = {"USER"})
+    void likePost_ShouldReturn204NoContentAndUpdateReactionAndSendNotification_WhenUserDislikesPost() throws Exception {
+        User savedUser = createAndSaveTheUser();
+
+        User poster = createAndSaveUser();
+
+        Post post = createAndSavePost(poster);
+
+        PostReaction postReaction = new PostReaction();
+        postReaction.setPost(post);
+        postReaction.setUser(savedUser);
+        postReaction.setType(ReactionType.DISLIKE);
+        postReaction = postReactionRepository.save(postReaction);
+
+        mockMvc.perform(post("/api/posts/" + post.getId() + "/like"))
+                .andExpect(status().isNoContent());
+
+        assertEquals(1, postReactionRepository.count());
+        List<PostReaction> postReactions = postReactionRepository.findAll();
+        PostReaction pr = postReactions.getFirst();
+        assertEquals(postReaction.getId(), pr.getId());
+        assertEquals(savedUser.getId(), pr.getUser().getId());
+        assertEquals(post.getId(), pr.getPost().getId());
+        assertEquals(ReactionType.LIKE, pr.getType());
+
+        assertEquals(1, notificationRepository.count());
+        List<Notification> notifications = notificationRepository.findAll();
+        Notification n = notifications.getFirst();
+        assertEquals(poster.getId(), n.getReceiver().getId());
+        assertEquals(savedUser.getId(), n.getSender().getId());
+        assertEquals(NotificationType.LIKED_POST, n.getType());
+        assertEquals(post.getId(), n.getReferenceId());
+        assertFalse(n.isRead());
+        assertNotNull(n.getCreatedAt());
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com", roles = {"USER"})
+    void likePost_ShouldReturn204NoContentAndSaveReactionAndSendNotification_WhenUserDidNotReactToPost() throws Exception {
+        User savedUser = createAndSaveTheUser();
+
+        User poster = createAndSaveUser();
+
+        Post post = createAndSavePost(poster);
+
+        mockMvc.perform(post("/api/posts/" + post.getId() + "/like"))
+                .andExpect(status().isNoContent());
+
+        assertEquals(1, postReactionRepository.count());
+        List<PostReaction> postReactions = postReactionRepository.findAll();
+        PostReaction pr = postReactions.getFirst();
+        assertEquals(savedUser.getId(), pr.getUser().getId());
+        assertEquals(post.getId(), pr.getPost().getId());
+        assertEquals(ReactionType.LIKE, pr.getType());
+        assertNotNull(pr.getCreatedAt());
+
+        assertEquals(1, notificationRepository.count());
+        List<Notification> notifications = notificationRepository.findAll();
+        Notification n = notifications.getFirst();
+        assertEquals(poster.getId(), n.getReceiver().getId());
+        assertEquals(savedUser.getId(), n.getSender().getId());
+        assertEquals(NotificationType.LIKED_POST, n.getType());
+        assertEquals(post.getId(), n.getReferenceId());
+        assertFalse(n.isRead());
+        assertNotNull(n.getCreatedAt());
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com", roles = {"USER"})
+    void likePost_ShouldReturn204NoContentAndSaveReaction_WhenUserDidNotReactToHisPost() throws Exception {
+        User savedUser = createAndSaveTheUser();
+
+        Post post = createAndSavePost(savedUser);
+
+        mockMvc.perform(post("/api/posts/" + post.getId() + "/like"))
+                .andExpect(status().isNoContent());
+
+        assertEquals(1, postReactionRepository.count());
+        List<PostReaction> postReactions = postReactionRepository.findAll();
+        PostReaction pr = postReactions.getFirst();
+        assertEquals(savedUser.getId(), pr.getUser().getId());
+        assertEquals(post.getId(), pr.getPost().getId());
+        assertEquals(ReactionType.LIKE, pr.getType());
+        assertNotNull(pr.getCreatedAt());
+
+        assertEquals(0, notificationRepository.count());
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com", roles = {"USER"})
+    void likePost_ShouldReturn204NoContentAndSaveReactionAndSendNotification_WhenPosterPrivateAndUserFollowing() throws Exception {
+        User savedUser = createAndSaveTheUser();
+
+        User poster = createAndSaveUser();
+        poster.setPrivate(true);
+        poster = userRepository.save(poster);
+
+        createAndSaveFollow(savedUser, poster);
+
+        Post post = createAndSavePost(poster);
+
+        mockMvc.perform(post("/api/posts/" + post.getId() + "/like"))
+                .andExpect(status().isNoContent());
+
+        assertEquals(1, postReactionRepository.count());
+        List<PostReaction> postReactions = postReactionRepository.findAll();
+        PostReaction pr = postReactions.getFirst();
+        assertEquals(savedUser.getId(), pr.getUser().getId());
+        assertEquals(post.getId(), pr.getPost().getId());
+        assertEquals(ReactionType.LIKE, pr.getType());
+        assertNotNull(pr.getCreatedAt());
+
+        assertEquals(1, notificationRepository.count());
+        List<Notification> notifications = notificationRepository.findAll();
+        Notification n = notifications.getFirst();
+        assertEquals(poster.getId(), n.getReceiver().getId());
+        assertEquals(savedUser.getId(), n.getSender().getId());
+        assertEquals(NotificationType.LIKED_POST, n.getType());
+        assertEquals(post.getId(), n.getReferenceId());
+        assertFalse(n.isRead());
+        assertNotNull(n.getCreatedAt());
     }
 
     private SavedPost createAndSaveSavedPost(User user, Post post) {

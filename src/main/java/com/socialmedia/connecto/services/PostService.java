@@ -23,4 +23,6 @@ public interface PostService {
 
     void unsavePost(Long postId);
 
+    void likePost(Long postId) throws AccessDeniedException;
+
 }

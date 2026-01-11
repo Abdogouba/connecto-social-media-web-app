@@ -4,6 +4,7 @@ import com.socialmedia.connecto.dtos.FollowListUserDTO;
 import com.socialmedia.connecto.dtos.FollowRequestAction;
 import com.socialmedia.connecto.dtos.FollowRequestResponseDTO;
 import com.socialmedia.connecto.dtos.PagedDTO;
+import com.socialmedia.connecto.enums.NotificationType;
 import com.socialmedia.connecto.models.*;
 import com.socialmedia.connecto.repositories.FollowRepository;
 import com.socialmedia.connecto.repositories.FollowRequestRepository;

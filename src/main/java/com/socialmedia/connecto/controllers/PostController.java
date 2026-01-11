@@ -53,5 +53,11 @@ public class PostController {
         return new ResponseEntity(HttpStatus.NO_CONTENT);
     }
 
+    @PostMapping("/{id}/like")
+    public ResponseEntity likePost(@PathVariable Long id) throws AccessDeniedException {
+        postService.likePost(id);
+        return new ResponseEntity(HttpStatus.NO_CONTENT);
+    }
+
 }
 

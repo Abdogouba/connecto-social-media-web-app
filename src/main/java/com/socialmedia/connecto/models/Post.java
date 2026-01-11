@@ -43,6 +43,9 @@ public class Post {
     @OneToMany(mappedBy = "post", cascade = CascadeType.REMOVE)
     private List<SavedPost> savedPosts = new ArrayList<>();
 
+    @OneToMany(mappedBy = "post", cascade = CascadeType.REMOVE)
+    private List<PostReaction> postReactions = new ArrayList<>();
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();

@@ -1,4 +1,4 @@
-package com.socialmedia.connecto.models;
+package com.socialmedia.connecto.enums;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 

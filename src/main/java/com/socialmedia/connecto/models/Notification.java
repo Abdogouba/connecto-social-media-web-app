@@ -1,5 +1,6 @@
 package com.socialmedia.connecto.models;
 
+import com.socialmedia.connecto.enums.NotificationType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;

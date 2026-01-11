@@ -1,4 +1,4 @@
-package com.socialmedia.connecto.models;
+package com.socialmedia.connecto.enums;
 
 public enum NotificationType {
     LIKED_POST,

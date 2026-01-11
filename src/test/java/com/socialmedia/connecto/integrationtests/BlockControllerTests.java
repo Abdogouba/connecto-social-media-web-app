@@ -1,5 +1,7 @@
 package com.socialmedia.connecto.integrationtests;
 
+import com.socialmedia.connecto.enums.Gender;
+import com.socialmedia.connecto.enums.Role;
 import com.socialmedia.connecto.models.*;
 import com.socialmedia.connecto.repositories.BlockRepository;
 import com.socialmedia.connecto.repositories.FollowRepository;
